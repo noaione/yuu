@@ -7,7 +7,7 @@ from .parser import webparse, parsem3u8
 from .common import __version__
 
 def main():
-    parser = argparse.ArgumentParser(prog='yuu', description='A simple AbemaTV video ripper', epilog='Created by NoAiOne - Version {v}'.format(v=__version__))
+    parser = argparse.ArgumentParser(prog='yuu', description='A simple AbemaTV video downloader', epilog='Created by NoAiOne - Version {v}'.format(v=__version__))
     parser.add_argument('--proxies', '-p', required=False, default=None, dest='proxy', help='Use http(s)/socks5 proxies (please add `socks5://` if you use socks5)')
     parser.add_argument('--resolution', '-r', required=False, default='1080p', dest='res', choices=['180p', '240p', '360p', '480p', '720p', '1080p'], help='Resolution (Default: 1080p)')
     parser.add_argument('--output', '-o', required=False, default=None, dest='output', help='Output filename')
@@ -52,7 +52,10 @@ def main():
         if args.output is None:
             print('[ERROR] Please provide output')
             sys.exit(1)
-        output = args.output + '.ts'
+        if args.output[-3:] == '.ts':
+            output = args.output
+        else:
+            output = args.output + '.ts'
 
     print('[INFO] Fetching user token')
     authtoken = getAuthToken(sesi)

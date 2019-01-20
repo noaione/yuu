@@ -1,5 +1,5 @@
 # (koito) yuu 
-A simple AbemaTV video ripper in python
+A simple AbemaTV video downloader in python
 
 ![koito yuu](https://raw.githubusercontent.com/noaione/cdn/gh-pages/i/fzpt7mt.jpg)
 
@@ -41,21 +41,27 @@ optional arguments:
 Created by NoAiOne - Version x.x
 ```
 
+- **`--proxies/-p`**: Download using proxy for people outside Japan
+    - Example: `127.0.0.1:1080`, `http://127.0.0.1:1080`, `http://user:pass@127.0.0.1:1080`, `socks5://127.0.0.1:1080`
+- **`--resolution/-r`**: Target resolution
+- **`--output/-o`**: Output filename (Automated if there's nothing omitted)
+- **`--version/-v`**: Show version number
+
 **Warning: I still haven't tested this program with proxy completely**
 
 Example command: 
-- >`yuu https://abema.tv/video/episode/189-11_s1_p1`
+- >`yuu https://abema.tv/video/episode/54-25_s1_p1`
 
-    Download 1080p video of Go-Toubun no Hanayome episode 01
-- >`yuu https://abema.tv/video/episode/189-11_s1_p1 -r 480p`
+    Download 1080p video of `Yagate Kimi ni Naru` episode 01
+- >`yuu https://abema.tv/video/episode/54-25_s1_p1 -r 480p`
 
-    Download 480p video of Go-Toubun no Hanayome episode 01
-- >`yuu https://ds-vod-abematv.akamaized.net/program/189-11_s1_p1/1080/playlist.m3u8 -o '5toubun01.ts'`
+    Download 480p video of `Yagate Kimi ni Naru` episode 01
+- >`yuu https://ds-vod-abematv.akamaized.net/program/54-25_s1_p1/1080/playlist.m3u8 -o '5toubun01.ts'`
 
     Download 1080p video from m3u8 link
-- >`yuu https://abema.tv/video/episode/189-11_s1_p1 -p '127.0.0.1:3128`
+- >`yuu https://abema.tv/video/episode/54-25_s1_p1 -p '127.0.0.1:3128`
 
-    Download 480p video of Go-Toubun no Hanayome episode 01 using 127.0.0.1:3128 proxy
+    Download 480p video of `Yagate Kimi ni Naru` episode 01 using 127.0.0.1:3128 proxy
 
 ## Credits
 - jackyzy823 (Decryption key fetching method)
