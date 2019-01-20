@@ -1,9 +1,9 @@
 import argparse
 import shutil
+import sys
 
 from .downloader import *
 from .parser import webparse, parsem3u8
-from .common import yuuError
 
 def main():
     parser = argparse.ArgumentParser(prog='yuu')
@@ -14,33 +14,52 @@ def main():
 
     args = parser.parse_args()
 
+    if args.proxy:
+        print('[INFO] Testing proxy')
+        sesi = requests.Session()
+        sesi.proxies = {'http': args.proxy}
+        try:
+            sesi.get('http://httpbin.org/get')
+        except TimeoutError:
+            sesi = requests.Session()
+            sesi.proxies = {'https': args.proxy}
+            try:
+                sesi.get('http://httpbin.org/get')
+            except TimeoutError:
+                print('[ERROR] Cannot connect to proxy (Request timeout)')
+                sys.exit(1)
+    else:
+        sesi = requests.Session()
+
     if args.input[-5:] != '.m3u8':
-        print('@@ Parsing website')
-        dltitle, eptitle, m3u8link = webparse(args.input, args.res)
-        print('@@ Parsing m3u8')
-        files, iv, ticket = parsem3u8(m3u8link, args.proxy)
+        print('[INFO] Parsing website')
+        dltitle, eptitle, m3u8link = webparse(args.input, args.res, sesi)
+        print('[INFO] Parsing m3u8')
+        files, iv, ticket = parsem3u8(m3u8link, sesi)
         output = '{x} - {y} (AbemaTV {z}).ts'.format(x=dltitle, y=eptitle, z=args.res)
     if arsg.input[-5:] == '.m3u8':
-        print('@@ Parsing m3u8')
-        files, iv, ticket = parsem3u8(args.input, args.proxy)
+        print('[INFO] Parsing m3u8')
+        files, iv, ticket = parsem3u8(args.input, sesi)
         if args.output is None:
-            yuuError('Please provide --output')
+            print('[ERROR] Please provide output')
+            sys.exit(1)
         output = args.output + '.ts'
 
-    print('@@ Fetching user token')
-    authtoken = getAuthToken(args.proxy)
-    print('@@ Fetching m3u8 key')
-    getkey = fetchVideoKey(ticket, authtoken, args.proxy)
+    print('[INFO] Fetching user token')
+    authtoken = getAuthToken(sesi)
+    print('[INFO] Fetching m3u8 key')
+    getkey = fetchVideoKey(ticket, authtoken, sesi)
     
-    print('@@ Starting downloader...')
-    dllist, tempdir = getVideo(files, getkey, iv, authtoken[0], args.proxy)
-    print('@@ Finished downloading')
-    print('@@ Merging video')
+    print('[INFO][DOWN] Starting downloader...')
+    dllist, tempdir = getVideo(files, getkey, iv, authtoken[0], sesi)
+    print('[INFO][DOWN] Finished downloading')
+    print('[INFO] Merging video')
     mergeVideo(dllist, output)
-    print('@@ Finished merging')
+    print('[INFO] Finished merging')
 
-    print('@@ Cleaning up')
+    print('[INFO] Cleaning up')
     shutil.rmtree(tempdir)
+    sys.exit(0)
 
 if __name__=='__main__':
     main()

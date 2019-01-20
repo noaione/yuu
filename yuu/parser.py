@@ -11,9 +11,9 @@ from base64 import urlsafe_b64encode
 from binascii import unhexlify
 from Crypto.Cipher import AES
 
-from .common import STRTABLE, HKEY, _MEDIATOKEN_API, _LICENSE_API, _USERAPI, _KEYPARAMS, _M3U8HEADLINK, yuuError
+from .common import STRTABLE, HKEY, _MEDIATOKEN_API, _LICENSE_API, _USERAPI, _KEYPARAMS, _M3U8HEADLINK
 
-def getAuthToken(proxy):
+def getAuthToken(session):
 	def keySecret(devid):
 		SECRETKEY = (b"v+Gjs=25Aw5erR!J8ZuvRrCx*rGswhB&qdHd_SYerEWdU&a?3DzN9B"
 					b"Rbp5KwY4hEmcj5#fykMjJ=AuWz5GSMY-d@H7DMEh3M@9n2G552Us$$"
@@ -53,30 +53,21 @@ def getAuthToken(proxy):
 	deviceid = str(uuid.uuid4())
 	jsonData = {"deviceId": deviceid, "applicationKeySecret": keySecret(deviceid)}
 	
-	if proxy:
-		res = requests.post(_USERAPI, json=jsonData, proxies={'http': proxy, 'https': proxy}).json()
-	else:
-		res = requests.post(_USERAPI, json=jsonData).json()
+	res = session.post(_USERAPI, json=jsonData).json()
+	
 	try:
 		token = res['token']
 	except:
-		raise yuuError('Failed to get usertoken')
+		print('[ERROR] Failed to get usertoken')
+		import sys; sys.exit(1)
 	
 	return ['bearer ' + token, deviceid]
 
-def fetchVideoKey(ticket=None, authToken=None, proxy=None):
-	auth = {"Authorization": authToken[0]}
-
-	if proxy:
-		restoken = requests.get(_MEDIATOKEN_API, params=_KEYPARAMS, headers=auth, proxies={'http': proxy, 'https': proxy}).json()
-	else:
-		restoken = requests.get(_MEDIATOKEN_API, params=_KEYPARAMS, headers=auth).json()
+def fetchVideoKey(ticket=None, authToken=None, session=None):
+	restoken = session.get(_MEDIATOKEN_API, params=_KEYPARAMS, headers={"Authorization": authToken[0]}).json()
 	mediatoken = restoken['token']
 
-	if proxy:
-		gl = requests.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket}, proxies={'http': proxy, 'https': proxy}).json()
-	else:
-		gl = requests.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket}).json()
+	gl = session.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket}).json()
 
 	cid = gl['cid']
 	k = gl['k']
@@ -93,19 +84,16 @@ def fetchVideoKey(ticket=None, authToken=None, proxy=None):
 	
 	return vkey
 
-def parsem3u8(m3u8, proxy=None):
-	if proxy:
-		r = requests.get(m3u8, proxies={'http': proxy, 'https': proxy})
-	else:
-		r = requests.get(m3u8)
+def parsem3u8(m3u8, session):
+	r = session.get(m3u8)
 	x = m3u8.loads(r)
 	files = x.files
 	iv = x.keys[0].iv[2:]
 	ticket = x.keys[0].uri[18:]
 	return [files, iv, ticket]
 
-def webparse(url, res):
-	req = requests.get(url)
+def webparse(url, res, session):
+	req = session.get(url)
 	soup = Soup(req.text, 'html.parser')
 	title = soup.find('span', attrs={'class': 'abm_cq_m abm_cq_l abm_cq_c'}).text 
 	title = title[:title.rfind(' |')]

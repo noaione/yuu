@@ -6,7 +6,6 @@ import os
 from binascii import unhexlify
 from Crypto.Cipher import AES
 from .parser import fetchVideoKey, getAuthToken, parsem3u8
-from .common import yuuError
 
 def decryptData(tsdata, key, iv):
 	def _decrypt(d, k, iv):
@@ -19,10 +18,8 @@ def decryptData(tsdata, key, iv):
 	
 	return _decrypt(tsdata, key, iv)
 	
-def getVideo(fileslist, key, iv, auth, proxy=None):
+def getVideo(fileslist, key, iv, auth, session):
 	tempdir = tempfile.mkdtemp()
-	if proxy:
-		proxies = {'http': proxy, 'https': proxy}
 	dledfiles = []
 	
 	with tqdm(total=len(fileslist), desc='Downloading', ascii=True, unit='Files') as pbar:
@@ -33,14 +30,11 @@ def getVideo(fileslist, key, iv, auth, proxy=None):
 			outputtemp = tempdir + '\\' + outputtemp
 			with open(outputtemp, 'wb') as outf:
 				try:
-					if proxy:
-						req = requests.get(tsf, headers=auth, proxies=proxies)
-						outf.write(req.content, key, iv)
-					else:
-						req = requests.get(tsf, headers=auth)
-						outf.write(req.content, key, iv)
+					req = session.get(tsf, headers={"Authorization": auth})
+					outf.write(decryptData(req.content, key, iv))
 				except Exception as err:
-					raise yuuError('Something wrong occured\nReason: {}'.format(err))
+					print('[ERROR] Problem occured\nreason: {}'.format(err))
+					import sys; sys.exit(1)
 			pbar.update()
 			dledfiles.append(outputtemp)
 	return [dledfiles, tempdir]
