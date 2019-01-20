@@ -1,5 +1,7 @@
-# yuu 
+# (koito) yuu 
 A simple AbemaTV video ripper in python
+
+![koito yuu](https://raw.githubusercontent.com/noaione/cdn/gh-pages/i/fzpt7mt.jpg)
 
 ## Requirements
 - pycryptodome
@@ -43,16 +45,20 @@ Created by NoAiOne - Version x.x
 
 Example command: 
 - >`yuu https://abema.tv/video/episode/189-11_s1_p1`
+
     Download 1080p video of Go-Toubun no Hanayome episode 01
 - >`yuu https://abema.tv/video/episode/189-11_s1_p1 -r 480p`
+
     Download 480p video of Go-Toubun no Hanayome episode 01
 - >`yuu https://ds-vod-abematv.akamaized.net/program/189-11_s1_p1/1080/playlist.m3u8 -o '5toubun01.ts'`
+
     Download 1080p video from m3u8 link
 - >`yuu https://abema.tv/video/episode/189-11_s1_p1 -p '127.0.0.1:3128`
+
     Download 480p video of Go-Toubun no Hanayome episode 01 using 127.0.0.1:3128 proxy
 
 ## Credits
 - jackyzy823 (Decryption key fetching method)
-- Last-Order ([Minyami](https://github.com/Last-Order/minyami) author)
+- Last-Order ([Minyami](https://github.com/Last-Order/Minyami) author)
 
 This project are protected by GNU General Public License v3
