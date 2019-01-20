@@ -1,0 +1,5 @@
+.vscode
+*.m3u8
+*.egg-info
+build
+dist
