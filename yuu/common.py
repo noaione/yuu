@@ -15,6 +15,7 @@ _KEYPARAMS = {
 _MEDIATOKEN_API = "https://api.abema.io/v1/media/token"
 _LICENSE_API = "https://license.abema.io/abematv-hls"
 _USERAPI = "https://api.abema.io/v1/users"
+_M3U8HEADLINK = 'https://ds-vod-abematv.akamaized.net/program'
 
 class yuuError(Exception):
 	pass

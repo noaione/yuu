@@ -5,14 +5,15 @@ import time
 import uuid
 import requests
 import m3u8
+from bs4 import BeautifulSoup as Soup
 
 from base64 import urlsafe_b64encode
 from binascii import unhexlify
 from Crypto.Cipher import AES
 
-from .common import STRTABLE, HKEY, _MEDIATOKEN_API, _LICENSE_API, _USERAPI, _KEYPARAMS, yuuError
+from .common import STRTABLE, HKEY, _MEDIATOKEN_API, _LICENSE_API, _USERAPI, _KEYPARAMS, _M3U8HEADLINK, yuuError
 
-def getAuthToken():
+def getAuthToken(proxy):
 	def keySecret(devid):
 		SECRETKEY = (b"v+Gjs=25Aw5erR!J8ZuvRrCx*rGswhB&qdHd_SYerEWdU&a?3DzN9B"
 					b"Rbp5KwY4hEmcj5#fykMjJ=AuWz5GSMY-d@H7DMEh3M@9n2G552Us$$"
@@ -52,7 +53,10 @@ def getAuthToken():
 	deviceid = str(uuid.uuid4())
 	jsonData = {"deviceId": deviceid, "applicationKeySecret": keySecret(deviceid)}
 	
-	res = requests.post(_USERAPI, json=jsonData).json()
+	if proxy:
+		res = requests.post(_USERAPI, json=jsonData, proxies={'http': proxy, 'https': proxy}).json()
+	else:
+		res = requests.post(_USERAPI, json=jsonData).json()
 	try:
 		token = res['token']
 	except:
@@ -60,13 +64,19 @@ def getAuthToken():
 	
 	return ['bearer ' + token, deviceid]
 
-def fetchVideoKey(ticket=None, authToken=None):
+def fetchVideoKey(ticket=None, authToken=None, proxy=None):
 	auth = {"Authorization": authToken[0]}
 
-	restoken = requests.get(_MEDIATOKEN_API, params=_KEYPARAMS, headers=auth).json()
+	if proxy:
+		restoken = requests.get(_MEDIATOKEN_API, params=_KEYPARAMS, headers=auth, proxies={'http': proxy, 'https': proxy}).json()
+	else:
+		restoken = requests.get(_MEDIATOKEN_API, params=_KEYPARAMS, headers=auth).json()
 	mediatoken = restoken['token']
 
-	gl = requests.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket}).json()
+	if proxy:
+		gl = requests.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket}, proxies={'http': proxy, 'https': proxy}).json()
+	else:
+		gl = requests.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket}).json()
 
 	cid = gl['cid']
 	k = gl['k']
@@ -83,12 +93,22 @@ def fetchVideoKey(ticket=None, authToken=None):
 	
 	return vkey
 
-def parsem3u8(m3u8):
-	x = m3u8.load(m3u8)
+def parsem3u8(m3u8, proxy=None):
+	if proxy:
+		r = requests.get(m3u8, proxies={'http': proxy, 'https': proxy})
+	else:
+		r = requests.get(m3u8)
+	x = m3u8.loads(r)
 	files = x.files
 	iv = x.keys[0].iv[2:]
 	ticket = x.keys[0].uri[18:]
 	return [files, iv, ticket]
 
-def webparse(url):
-	return None
+def webparse(url, res):
+	req = requests.get(url)
+	soup = Soup(req.text, 'html.parser')
+	title = soup.find('span', attrs={'class': 'abm_cq_m abm_cq_l abm_cq_c'}).text 
+	title = title[:title.rfind(' |')]
+	epnum = soup.find('h1', attrs={'class': 'com-video-EpisodeSection__title abm_cq_j abm_cq_l abm_cq_a abm_cq_c'}).text
+	m3u8link = '{x}/{vid}/{r}/playlist.m3u8'.format(x=_M3U8HEADLINK, vid=url[url.rfind('/')+1:], r=res)
+	return title, epnum, m3u8link

@@ -19,11 +19,8 @@ def decryptData(tsdata, key, iv):
 	
 	return _decrypt(tsdata, key, iv)
 	
-def getVideo(fileslist, iv, ticket, proxy=None):
+def getVideo(fileslist, key, iv, auth, proxy=None):
 	tempdir = tempfile.mkdtemp()
-	authToken = getAuthToken()
-	auth = {'Authorization': authToken[0]}
-	key = fetchVideoKey(ticket, authToken)
 	if proxy:
 		proxies = {'http': proxy, 'https': proxy}
 	dledfiles = []
