@@ -4,7 +4,7 @@ import struct
 import time
 import uuid
 import requests
-import m3u8
+import m3u8 as M3U8
 from bs4 import BeautifulSoup as Soup
 
 from base64 import urlsafe_b64encode
@@ -64,7 +64,7 @@ def getAuthToken(session):
 	return ['bearer ' + token, deviceid]
 
 def fetchVideoKey(ticket=None, authToken=None, session=None):
-	restoken = session.get(_MEDIATOKEN_API, params=_KEYPARAMS, headers={"Authorization": authToken[0]}).json()
+	restoken = session.get(_MEDIATOKEN_API, params=_KEYPARAMS).json()
 	mediatoken = restoken['token']
 
 	gl = session.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket}).json()
@@ -86,11 +86,11 @@ def fetchVideoKey(ticket=None, authToken=None, session=None):
 
 def parsem3u8(m3u8, session):
 	r = session.get(m3u8)
-	x = m3u8.loads(r)
+	x = M3U8.loads(r.text)
 	files = x.files
 	iv = x.keys[0].iv[2:]
 	ticket = x.keys[0].uri[18:]
-	return [files, iv, ticket]
+	return [files[1:], iv, ticket]
 
 def webparse(url, res, session):
 	req = session.get(url)
@@ -98,5 +98,5 @@ def webparse(url, res, session):
 	title = soup.find('span', attrs={'class': 'abm_cq_m abm_cq_l abm_cq_c'}).text 
 	title = title[:title.rfind(' |')]
 	epnum = soup.find('h1', attrs={'class': 'com-video-EpisodeSection__title abm_cq_j abm_cq_l abm_cq_a abm_cq_c'}).text
-	m3u8link = '{x}/{vid}/{r}/playlist.m3u8'.format(x=_M3U8HEADLINK, vid=url[url.rfind('/')+1:], r=res)
+	m3u8link = '{x}/{vid}/{r}/playlist.m3u8'.format(x=_M3U8HEADLINK, vid=url[url.rfind('/')+1:], r=res[:-1])
 	return title, epnum, m3u8link

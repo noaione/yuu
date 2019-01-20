@@ -1,5 +1,5 @@
 import tempfile
-import tqdm
+from tqdm import tqdm
 import requests
 import os
 
@@ -18,11 +18,11 @@ def decryptData(tsdata, key, iv):
 	
 	return _decrypt(tsdata, key, iv)
 	
-def getVideo(fileslist, key, iv, auth, session):
+def getVideo(fileslist, key, iv, session):
 	tempdir = tempfile.mkdtemp()
 	dledfiles = []
 	
-	with tqdm(total=len(fileslist), desc='Downloading', ascii=True, unit='Files') as pbar:
+	with tqdm(total=len(fileslist), desc='Downloading', ascii=True, unit='file') as pbar:
 		for tsf in fileslist:
 			outputtemp = os.path.basename(tsf)
 			if outputtemp.find('?tver') != -1:
@@ -30,7 +30,7 @@ def getVideo(fileslist, key, iv, auth, session):
 			outputtemp = tempdir + '\\' + outputtemp
 			with open(outputtemp, 'wb') as outf:
 				try:
-					req = session.get(tsf, headers={"Authorization": auth})
+					req = session.get(tsf)
 					outf.write(decryptData(req.content, key, iv))
 				except Exception as err:
 					print('[ERROR] Problem occured\nreason: {}'.format(err))
@@ -40,11 +40,10 @@ def getVideo(fileslist, key, iv, auth, session):
 	return [dledfiles, tempdir]
 	
 def mergeVideo(inp, out):
-	out = out + '.ts'
 	with open(out, 'wb') as outf:
-		with tqdm(total=len(inp), desc='Merging', ascii=True, unit='Files') as pbar:
+		with tqdm(total=len(inp), desc='Merging', ascii=True, unit='file') as pbar:
 			for i in inp:
-				c = open(i, 'rb').read()
-				outf.write(c)
-				c.close()
+				with open(i, 'rb') as c:
+					outf.write(c.read())
 				os.remove(i)
+				pbar.update()

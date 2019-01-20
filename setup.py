@@ -1,9 +1,14 @@
 import setuptools
 from yuu.common import __version__
 
+with open('README.md', 'r') as f:
+    desc = f.read()
+
 setuptools.setup(name = 'yuu',
 version = __version__,
 description = 'Yuu - A simple AbemaTV video ripper',
+long_description = desc,
+long_description_content_type = "text/markdown",
 author = 'noaione',
 author_email = 'noaione0809@gmail.com',
 keywords = ['ripping', 'downloader', 'parser'],
