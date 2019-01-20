@@ -21,16 +21,22 @@ def main():
         print('[INFO] Testing proxy')
         sesi = requests.Session()
         sesi.proxies = {'http': args.proxy}
+        # Someebody tell me to do recursive test properly
         try:
-            sesi.get('http://httpbin.org/get')
+            sesi.get('http://httpbin.org/get') # Some test website to check if proxy works or not
         except TimeoutError:
             sesi = requests.Session()
             sesi.proxies = {'https': args.proxy}
             try:
-                sesi.get('http://httpbin.org/get')
+                sesi.get('http://httpbin.org/get') # This too but in https mode
             except TimeoutError:
-                print('[ERROR] Cannot connect to proxy (Request timeout)')
-                sys.exit(1)
+                sesi = requests.Session()
+                sesi.proxies = {'http': args.proxy, 'https': args.proxy} # Final test if it's failed then it will return error
+                try:
+                    sesi.get('http://httpbin.org/get')
+                except:
+                    print('[ERROR] Cannot connect to proxy (Request timeout)')
+                    sys.exit(1)
     else:
         sesi = requests.Session()
 
