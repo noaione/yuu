@@ -6,7 +6,7 @@ with open('README.md', 'r') as f:
 
 setuptools.setup(name = 'yuu',
 version = __version__,
-description = 'Yuu - A simple AbemaTV video ripper',
+description = 'Yuu - A simple AbemaTV video downloader',
 long_description = desc,
 long_description_content_type = "text/markdown",
 author = 'noaione',
