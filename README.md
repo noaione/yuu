@@ -47,7 +47,7 @@ Created by NoAiOne - Version x.x
 - **`--output/-o`**: Output filename (Automated if there's nothing omitted)
 - **`--version/-v`**: Show version number
 
-**Warning: I still haven't tested this program with proxy completely**
+**Information: Please use HTTPS proxy for now, it tested and works. SOCKS5 are not tested yet and HTTP doesn't work**
 
 Example command: 
 - >`yuu https://abema.tv/video/episode/54-25_s1_p1`
