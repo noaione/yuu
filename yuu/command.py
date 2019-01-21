@@ -21,7 +21,7 @@ def main():
     if args.proxy:
         print('[INFO] Testing proxy')
         sesi = requests.Session()
-        sesi.proxies = {'http': args.proxy}
+        sesi.proxies = {'http': args.proxy, 'https': args.proxy}
         # Someebody tell me to do recursive test properly
         try:
             if args.verbose:
@@ -31,7 +31,7 @@ def main():
             if args.verbose:
                 print('[DEBUG] Failed')
             sesi = requests.Session()
-            sesi.proxies = {'https': args.proxy}
+            sesi.proxies = {'http': args.proxy}
             try:
                 if args.verbose:
                     print('[DEBUG] Testing https mode proxy')
@@ -40,7 +40,7 @@ def main():
                 if args.verbose:
                     print('[DEBUG] Failed')
                 sesi = requests.Session()
-                sesi.proxies = {'http': args.proxy, 'https': args.proxy} # Final test if it's failed then it will return error
+                sesi.proxies = {'https': args.proxy} # Final test if it's failed then it will return error
                 try:
                     if args.verbose:
                         print('[DEBUG] Testing http+https mode proxy')
@@ -58,7 +58,7 @@ def main():
             print('[ERROR] No connection available to make requests')
             sys.exit(0)
     if args.verbose:
-        print('[DEBUG] Got answer: '.x.status_code)
+        print('[DEBUG] Got answer: '.format(x.status_code))
 
     if args.input[-5:] != '.m3u8':
         print('[INFO] Parsing website')
