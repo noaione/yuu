@@ -69,7 +69,13 @@ def main():
         dltitle, eptitle, m3u8link = webparse(args.input, args.res, sesi, args.verbose)
         print('[INFO] Parsing m3u8')
         files, iv, ticket = parsem3u8(m3u8link, sesi, args.verbose)
-        output = '{x} - {y} (AbemaTV {z}).ts'.format(x=dltitle, y=eptitle, z=args.res)
+        if args.output:
+            if args.output[-3:] == '.ts':
+                output = args.output
+            else:
+                output = args.output + '.ts'
+        else:
+            output = '{x} - {y} (AbemaTV {z}).ts'.format(x=dltitle, y=eptitle, z=args.res)
         if args.verbose:
             print('[DEBUG] Output file: {}'.format(output))
     elif args.input[-5:] == '.m3u8':
