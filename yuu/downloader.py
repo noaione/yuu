@@ -35,7 +35,7 @@ def getVideo(fileslist, key, iv, session, verbose):
 				with open(outputtemp, 'wb') as outf:
 					try:
 						req = session.get(tsf)
-						outf.write(decryptData(req.content, key, iv))
+						outf.write(decryptData(req.content, key, iv, verbose))
 					except Exception as err:
 						print('[ERROR] Problem occured\nreason: {}'.format(err))
 						import sys; sys.exit(1)
