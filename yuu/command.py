@@ -11,7 +11,8 @@ def main():
     parser.add_argument('--proxies', '-p', required=False, default=None, dest='proxy', help='Use http(s)/socks5 proxies (please add `socks5://` if you use socks5)')
     parser.add_argument('--resolution', '-r', required=False, default='1080p', dest='res', choices=['180p', '240p', '360p', '480p', '720p', '1080p'], help='Resolution (Default: 1080p)')
     parser.add_argument('--output', '-o', required=False, default=None, dest='output', help='Output filename')
-    parser.add_argument('--version', '-v', action='version', version='%(prog)s {v} - Created by NoAiOne'.format(v=__version__))
+    parser.add_argument('--version', '-V', action='version', version='%(prog)s {v} - Created by NoAiOne'.format(v=__version__))
+    parser.add_argument('--verbose', '-v', action='store_true', help="Enable verbose")
     parser.add_argument('input', help='AbemaTV url site or m3u8')
 
     args = parser.parse_args()
@@ -23,32 +24,51 @@ def main():
         sesi.proxies = {'http': args.proxy}
         # Someebody tell me to do recursive test properly
         try:
-            sesi.get('http://httpbin.org/get') # Some test website to check if proxy works or not
-        except TimeoutError:
+            if args.verbose:
+                print('[DEBUG] Testing http mode proxy')
+            x = sesi.get('http://httpbin.org/get') # Some test website to check if proxy works or not
+        except:
+            if args.verbose:
+                print('[DEBUG] Failed')
             sesi = requests.Session()
             sesi.proxies = {'https': args.proxy}
             try:
-                sesi.get('http://httpbin.org/get') # This too but in https mode
-            except TimeoutError:
+                if args.verbose:
+                    print('[DEBUG] Testing https mode proxy')
+                x = sesi.get('http://httpbin.org/get') # This too but in https mode
+            except:
+                if args.verbose:
+                    print('[DEBUG] Failed')
                 sesi = requests.Session()
                 sesi.proxies = {'http': args.proxy, 'https': args.proxy} # Final test if it's failed then it will return error
                 try:
-                    sesi.get('http://httpbin.org/get')
+                    if args.verbose:
+                        print('[DEBUG] Testing http+https mode proxy')
+                    x = sesi.get('http://httpbin.org/get')
                 except:
+                    if args.verbose:
+                        print('[DEBUG] Failed')
                     print('[ERROR] Cannot connect to proxy (Request timeout)')
                     sys.exit(1)
     else:
         sesi = requests.Session()
+        try:
+            x = sesi.get('http://httpbin.org/get')
+        except:
+            print('[ERROR] No connection available to make requests')
+            sys.exit(0)
+    if args.verbose:
+        print('[DEBUG] Got answer: '.x.status_code)
 
     if args.input[-5:] != '.m3u8':
         print('[INFO] Parsing website')
-        dltitle, eptitle, m3u8link = webparse(args.input, args.res, sesi)
+        dltitle, eptitle, m3u8link = webparse(args.input, args.res, sesi, args.verbose)
         print('[INFO] Parsing m3u8')
-        files, iv, ticket = parsem3u8(m3u8link, sesi)
+        files, iv, ticket = parsem3u8(m3u8link, sesi, args.verbose)
         output = '{x} - {y} (AbemaTV {z}).ts'.format(x=dltitle, y=eptitle, z=args.res)
     elif args.input[-5:] == '.m3u8':
         print('[INFO] Parsing m3u8')
-        files, iv, ticket = parsem3u8(args.input, sesi)
+        files, iv, ticket = parsem3u8(args.input, sesi, args.verbose)
         if args.output is None:
             print('[ERROR] Please provide output')
             sys.exit(1)
@@ -58,13 +78,13 @@ def main():
             output = args.output + '.ts'
 
     print('[INFO] Fetching user token')
-    authtoken = getAuthToken(sesi)
+    authtoken = getAuthToken(sesi, args.verbose)
     sesi.headers.update({'Authorization': authtoken[0]})
     print('[INFO] Fetching m3u8 key')
-    getkey = fetchVideoKey(ticket, authtoken, sesi)
+    getkey = fetchVideoKey(ticket, authtoken, sesi, args.verbose)
     
     print('[INFO][DOWN] Starting downloader...')
-    dllist, tempdir = getVideo(files, getkey, iv, sesi)
+    dllist, tempdir = getVideo(files, getkey, iv, sesi, args.verbose)
     print('[INFO][DOWN] Finished downloading')
     print('[INFO] Merging video')
     mergeVideo(dllist, output)
