@@ -7,7 +7,9 @@ from binascii import unhexlify
 from Crypto.Cipher import AES
 from .parser import fetchVideoKey, getAuthToken, parsem3u8
 
-def decryptData(tsdata, key, iv):
+def decryptData(tsdata, key, iv, verbose):
+	if verbose:
+		print('[DEBUG] Decrypting data')
 	def _decrypt(d, k, iv):
 		dec = AES.new(k, AES.MODE_CBC, IV=iv)
 		return dec.decrypt(d)
@@ -18,28 +20,48 @@ def decryptData(tsdata, key, iv):
 	
 	return _decrypt(tsdata, key, iv)
 	
-def getVideo(fileslist, key, iv, session):
+def getVideo(fileslist, key, iv, session, verbose):
+	print('[INFO] Creating temporary folder')
 	tempdir = tempfile.mkdtemp()
 	dledfiles = []
 	
-	with tqdm(total=len(fileslist), desc='Downloading', ascii=True, unit='file') as pbar:
+	if not verbose:
+		with tqdm(total=len(fileslist), desc='Downloading', ascii=True, unit='file') as pbar:
+			for tsf in fileslist:
+				outputtemp = os.path.basename(tsf)
+				if outputtemp.find('?tver') != -1:
+					outputtemp = outputtemp[:outputtemp.find('?tver')]
+				outputtemp = tempdir + '\\' + outputtemp
+				with open(outputtemp, 'wb') as outf:
+					try:
+						req = session.get(tsf)
+						outf.write(decryptData(req.content, key, iv))
+					except Exception as err:
+						print('[ERROR] Problem occured\nreason: {}'.format(err))
+						import sys; sys.exit(1)
+				pbar.update()
+				dledfiles.append(outputtemp)
+	elif verbose:
 		for tsf in fileslist:
 			outputtemp = os.path.basename(tsf)
 			if outputtemp.find('?tver') != -1:
 				outputtemp = outputtemp[:outputtemp.find('?tver')]
+			print('[DEBUG] Downloading: {}'.format(outputtemp))
+			otpt = outputtemp
 			outputtemp = tempdir + '\\' + outputtemp
 			with open(outputtemp, 'wb') as outf:
 				try:
+					print('[DEBUG] Requesting content for: {}'.format(otpt))
 					req = session.get(tsf)
-					outf.write(decryptData(req.content, key, iv))
+					outf.write(decryptData(req.content, key, iv, verbose))
+					print('[DEBUG] Data decrypted')
 				except Exception as err:
 					print('[ERROR] Problem occured\nreason: {}'.format(err))
 					import sys; sys.exit(1)
-			pbar.update()
-			dledfiles.append(outputtemp)
+
 	return [dledfiles, tempdir]
 	
-def mergeVideo(inp, out):
+def mergeVideo(inp, out, verbose):
 	with open(out, 'wb') as outf:
 		with tqdm(total=len(inp), desc='Merging', ascii=True, unit='file') as pbar:
 			for i in inp:
