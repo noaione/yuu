@@ -85,9 +85,11 @@ def getAuthToken(session, verbose):
 	res = session.post(_USERAPI, json=jsonData).json()
 
 	try:
-		print('[DEBUG] Data sended, getting token')
+		if verbose:
+			print('[DEBUG] Data sended, getting token')
 		token = res['token']
-		print('[DEBUG] Usertoken: {}'.format(token))
+		if verbose:
+			print('[DEBUG] Usertoken: {}'.format(token))
 	except:
 		print('[ERROR] Failed to get usertoken')
 		import sys; sys.exit(1)

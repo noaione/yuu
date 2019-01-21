@@ -21,7 +21,7 @@ def decryptData(tsdata, key, iv, verbose):
 	return _decrypt(tsdata, key, iv)
 	
 def getVideo(fileslist, key, iv, session, verbose):
-	print('[INFO] Creating temporary folder')
+	print('[INFO][DOWN] Creating temporary folder')
 	tempdir = tempfile.mkdtemp()
 	dledfiles = []
 	
@@ -46,22 +46,22 @@ def getVideo(fileslist, key, iv, session, verbose):
 			outputtemp = os.path.basename(tsf)
 			if outputtemp.find('?tver') != -1:
 				outputtemp = outputtemp[:outputtemp.find('?tver')]
-			print('[DEBUG] Downloading: {}'.format(outputtemp))
 			otpt = outputtemp
-			outputtemp = tempdir + '\\' + outputtemp
+			outputtemp = tempdir + '/' + outputtemp
 			with open(outputtemp, 'wb') as outf:
 				try:
 					print('[DEBUG] Requesting content for: {}'.format(otpt))
 					req = session.get(tsf)
+					print('[DEBUG][DOWN] Decrypting content: {}'.format(otpt))
 					outf.write(decryptData(req.content, key, iv, verbose))
-					print('[DEBUG] Data decrypted')
 				except Exception as err:
 					print('[ERROR] Problem occured\nreason: {}'.format(err))
 					import sys; sys.exit(1)
+			dledfiles.append(outputtemp)
 
 	return [dledfiles, tempdir]
 	
-def mergeVideo(inp, out, verbose):
+def mergeVideo(inp, out):
 	with open(out, 'wb') as outf:
 		with tqdm(total=len(inp), desc='Merging', ascii=True, unit='file') as pbar:
 			for i in inp:
