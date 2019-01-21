@@ -26,7 +26,8 @@ def main():
         try:
             if args.verbose:
                 print('[DEBUG] Testing http mode proxy')
-            x = sesi.get('http://httpbin.org/get') # Some test website to check if proxy works or not
+            sesi.get('http://httpbin.org/get') # Some test website to check if proxy works or not
+            pmode = "HTTP+HTTPS/SOCKS5"
         except:
             if args.verbose:
                 print('[DEBUG] Failed')
@@ -35,7 +36,8 @@ def main():
             try:
                 if args.verbose:
                     print('[DEBUG] Testing https mode proxy')
-                x = sesi.get('http://httpbin.org/get') # This too but in https mode
+                sesi.get('http://httpbin.org/get') # This too but in https mode
+                pmode = "HTTP/SOCKS5"
             except:
                 if args.verbose:
                     print('[DEBUG] Failed')
@@ -44,7 +46,8 @@ def main():
                 try:
                     if args.verbose:
                         print('[DEBUG] Testing http+https mode proxy')
-                    x = sesi.get('http://httpbin.org/get')
+                    sesi.get('http://httpbin.org/get')
+                    pmode = "HTTPS/SOCKS5"
                 except:
                     if args.verbose:
                         print('[DEBUG] Failed')
@@ -53,12 +56,13 @@ def main():
     else:
         sesi = requests.Session()
         try:
-            x = sesi.get('http://httpbin.org/get')
+            sesi.get('http://httpbin.org/get')
+            pmode = "No proxy"
         except:
             print('[ERROR] No connection available to make requests')
             sys.exit(0)
     if args.verbose:
-        print('[DEBUG] Got answer: '.format(x.status_code))
+        print('[DEBUG] Using proxy mode: {}'.format(pmode))
 
     if args.input[-5:] != '.m3u8':
         print('[INFO] Parsing website')
@@ -66,6 +70,8 @@ def main():
         print('[INFO] Parsing m3u8')
         files, iv, ticket = parsem3u8(m3u8link, sesi, args.verbose)
         output = '{x} - {y} (AbemaTV {z}).ts'.format(x=dltitle, y=eptitle, z=args.res)
+        if args.verbose:
+            print('[DEBUG] Output file: {}'.format(output))
     elif args.input[-5:] == '.m3u8':
         print('[INFO] Parsing m3u8')
         files, iv, ticket = parsem3u8(args.input, sesi, args.verbose)
