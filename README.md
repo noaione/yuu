@@ -67,4 +67,4 @@ Example command:
 - jackyzy823 (Decryption key fetching method)
 - Last-Order ([Minyami](https://github.com/Last-Order/Minyami) author)
 
-This project are protected by GNU General Public License v3
+This project are protected by BSD-3-Clause License

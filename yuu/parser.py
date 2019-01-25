@@ -169,7 +169,7 @@ def webparse(url, res, session, verbose):
 		print('[DEBUG] Pages requested')
 		print('[DEBUG] Parsing webpage')
 	soup = Soup(req.text, 'html.parser')
-	title = soup.find('span', attrs={'class': 'abm_cq_m abm_cq_l abm_cq_c'}).text 
+	title = soup.find('span', attrs={'class': 'abm_cq_m abm_cq_l abm_cq_c'}).text
 	title = title[:title.rfind(' |')]
 	epnum = soup.find('h1', attrs={'class': 'com-video-EpisodeSection__title abm_cq_j abm_cq_l abm_cq_a abm_cq_c'}).text
 	m3u8link = '{x}/{vid}/{r}/playlist.m3u8'.format(x=_M3U8HEADLINK, vid=url[url.rfind('/')+1:], r=res[:-1])
