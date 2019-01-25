@@ -47,7 +47,7 @@ def getVideo(fileslist, key, iv, session, verbose):
 			if outputtemp.find('?tver') != -1:
 				outputtemp = outputtemp[:outputtemp.find('?tver')]
 			otpt = outputtemp
-			outputtemp = tempdir + '/' + outputtemp
+			outputtemp = os.path.join(tempdir, outputtemp)
 			with open(outputtemp, 'wb') as outf:
 				try:
 					print('[DEBUG] Requesting content for: {}'.format(otpt))
