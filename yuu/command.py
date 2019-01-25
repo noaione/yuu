@@ -22,10 +22,10 @@ def main():
         print('[INFO] Testing proxy')
         sesi = requests.Session()
         sesi.proxies = {'http': args.proxy, 'https': args.proxy}
-        # Someebody tell me to do recursive test properly
+        # Someebody tell me how to do recursive test properly
         try:
             if args.verbose:
-                print('[DEBUG] Testing http mode proxy')
+                print('[DEBUG] Testing http+https mode proxy')
             sesi.get('http://httpbin.org/get') # Some test website to check if proxy works or not
             pmode = "HTTP+HTTPS/SOCKS5"
         except:
@@ -35,7 +35,7 @@ def main():
             sesi.proxies = {'http': args.proxy}
             try:
                 if args.verbose:
-                    print('[DEBUG] Testing https mode proxy')
+                    print('[DEBUG] Testing http mode proxy')
                 sesi.get('http://httpbin.org/get') # This too but in https mode
                 pmode = "HTTP/SOCKS5"
             except:
@@ -45,7 +45,7 @@ def main():
                 sesi.proxies = {'https': args.proxy} # Final test if it's failed then it will return error
                 try:
                     if args.verbose:
-                        print('[DEBUG] Testing http+https mode proxy')
+                        print('[DEBUG] Testing https mode proxy')
                     sesi.get('http://httpbin.org/get')
                     pmode = "HTTPS/SOCKS5"
                 except:
