@@ -3,7 +3,7 @@ A simple AbemaTV video downloader in python
 
 ![koito yuu](https://raw.githubusercontent.com/noaione/cdn/gh-pages/i/fzpt7mt.jpg)
 
-![pypi version](https://img.shields.io/pypi/v/yuu.svg?style=for-the-badge) ![python version](https://img.shields.io/pypi/pyversions/yuu.svg?style=for-the-badge) ![License](https://img.shields.io/github/license/noaione/yuu.svg?style=for-the-badge)
+[![pypi version](https://img.shields.io/pypi/v/yuu.svg?style=for-the-badge)](https://pypi.org/project/yuu/) ![python version](https://img.shields.io/pypi/pyversions/yuu.svg?style=for-the-badge) [![License](https://img.shields.io/github/license/noaione/yuu.svg?style=for-the-badge)](https://github.com/noaione/yuu/blob/master/LICENSE)
 
 ## Requirements
 - pycryptodome
