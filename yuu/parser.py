@@ -11,7 +11,7 @@ from base64 import urlsafe_b64encode
 from binascii import unhexlify
 from Crypto.Cipher import AES
 
-from .common import STRTABLE, HKEY, _MEDIATOKEN_API, _LICENSE_API, _USERAPI, _KEYPARAMS, _M3U8HEADLINK
+from .common import STRTABLE, HKEY, _MEDIATOKEN_API, _LICENSE_API, _USERAPI, _KEYPARAMS, _PROGRAMAPI
 
 def getAuthToken(session, verbose):
 	def keySecret(devid):
@@ -163,18 +163,22 @@ def parsem3u8(m3u8, session, verbose):
 
 def webparse(url, res, session, verbose):
 	if verbose:
-		print('[DEBUG] Requesting pages')
-	req = session.get(url)
+		print('[DEBUG] Requesting data to API')
+	eplink = url[url.rfind('/')+1:]
+	req = session.get(_PROGRAMAPI + eplink)
 	if verbose and req.status_code == 200:
-		print('[DEBUG] Pages requested')
-		print('[DEBUG] Parsing webpage')
-	soup = Soup(req.text, 'html.parser')
-	title = soup.find('span', attrs={'class': 'abm_cq_m abm_cq_l abm_cq_c'}).text
-	title = title[:title.rfind(' |')]
-	epnum = soup.find('h1', attrs={'class': 'com-video-EpisodeSection__title abm_cq_j abm_cq_l abm_cq_a abm_cq_c'}).text
-	m3u8link = '{x}/{vid}/{r}/playlist.m3u8'.format(x=_M3U8HEADLINK, vid=url[url.rfind('/')+1:], r=res[:-1])
+		print('[DEBUG] Data requested')
+		print('[DEBUG] Parsing json API')
+	jsdata = req.json()
+	title = jsdata['series']['title']
+	epnum = jsdata['episode']['title']
+	hls = jsdata['playback']['hls']
+	
+	m3u8link = '{x}/{r}/playlist.m3u8'.format(x=hls[:hls.rfind('/')], r=res[:-1])
+	
 	if verbose:
 		print('[DEBUG] M3U8 Link: {}'.format(m3u8link))
 		print('[DEBUG] Video title: {}'.format(title))
 		print('[DEBUG] Episode number: {}'.format(epnum))
+		
 	return title, epnum, m3u8link
