@@ -5,7 +5,6 @@ import time
 import uuid
 import requests
 import m3u8 as M3U8
-from bs4 import BeautifulSoup as Soup
 
 from base64 import urlsafe_b64encode
 from binascii import unhexlify

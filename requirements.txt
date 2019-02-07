@@ -2,4 +2,3 @@ requests[socks]
 m3u8
 tqdm
 pycryptodome
-beautifulsoup4
