@@ -63,7 +63,11 @@ def main():
             sys.exit(0)
     if args.verbose:
         print('[DEBUG] Using proxy mode: {}'.format(pmode))
-
+		
+    print('[INFO] Fetching user token')
+    authtoken = getAuthToken(sesi, args.verbose)
+    sesi.headers.update({'Authorization': authtoken[0]})
+	
     if args.input[-5:] != '.m3u8':
         print('[INFO] Parsing website')
         dltitle, eptitle, m3u8link = webparse(args.input, args.res, sesi, args.verbose)
@@ -89,9 +93,6 @@ def main():
         else:
             output = args.output + '.ts'
 
-    print('[INFO] Fetching user token')
-    authtoken = getAuthToken(sesi, args.verbose)
-    sesi.headers.update({'Authorization': authtoken[0]})
     print('[INFO] Fetching m3u8 key')
     getkey = fetchVideoKey(ticket, authtoken, sesi, args.verbose)
     
