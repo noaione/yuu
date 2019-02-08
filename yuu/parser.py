@@ -5,12 +5,13 @@ import time
 import uuid
 import requests
 import m3u8 as M3U8
+import re
 
 from base64 import urlsafe_b64encode
 from binascii import unhexlify
 from Crypto.Cipher import AES
 
-from .common import STRTABLE, HKEY, _MEDIATOKEN_API, _LICENSE_API, _USERAPI, _KEYPARAMS, _PROGRAMAPI
+from .common import STRTABLE, HKEY, _MEDIATOKEN_API, _LICENSE_API, _USERAPI, _KEYPARAMS, _PROGRAMAPI, _CHANNELAPI, is_channel
 
 def getAuthToken(session, verbose):
 	def keySecret(devid):
@@ -160,24 +161,85 @@ def parsem3u8(m3u8, session, verbose):
 		print('[DEBUG] Ticket key: {}'.format(ticket))
 	return [files[1:], iv[2:], ticket]
 
+def webparse_m3u8(m3u8, session, verbose):
+	if verbose:
+		print('[DEBUG] Requesting data to API')
+	reg = re.compile('(program|slot)\/[\w+-]+')
+	res = re.search(reg, m3u8)[0]
+	eplink = res[res.find('/')+1:]
+
+	if 'slot' in res:
+		req = session.get(_CHANNELAPI + eplink)
+		if verbose and req.status_code == 200:
+			print('[DEBUG] Data requested')
+			print('[DEBUG] Parsing json API')
+		jsdata = req.json()
+		title = jsdata['slot']['title']
+		res = m3u8[:m3u8.rfind('/')]
+		res = res[res.rfind('/')+1:]
+
+		if verbose:
+			print('[DEBUG] M3U8 Link: {}'.format(m3u8))
+			print('[DEBUG] Title: {}'.format(title))
+		
+		return title, res
+	else:
+		req = session.get(_PROGRAMAPI + eplink)
+		if verbose and req.status_code == 200:
+			print('[DEBUG] Data requested')
+			print('[DEBUG] Parsing json API')
+		jsdata = req.json()
+		title = jsdata['series']['title']
+		epnum = jsdata['episode']['title']
+		outputfile = title + ' - ' + epnum
+
+		res = m3u8[:m3u8.rfind('/')]
+		res = res[res.rfind('/')+1:]
+		
+		if verbose:
+			print('[DEBUG] M3U8 Link: {}'.format(m3u8))
+			print('[DEBUG] Video title: {}'.format(title))
+			print('[DEBUG] Episode number: {}'.format(epnum))
+			
+		return outputfile, res
+
 def webparse(url, res, session, verbose):
 	if verbose:
 		print('[DEBUG] Requesting data to API')
 	eplink = url[url.rfind('/')+1:]
-	req = session.get(_PROGRAMAPI + eplink)
-	if verbose and req.status_code == 200:
-		print('[DEBUG] Data requested')
-		print('[DEBUG] Parsing json API')
-	jsdata = req.json()
-	title = jsdata['series']['title']
-	epnum = jsdata['episode']['title']
-	hls = jsdata['playback']['hls']
-	
-	m3u8link = '{x}/{r}/playlist.m3u8'.format(x=hls[:hls.rfind('/')], r=res[:-1])
-	
-	if verbose:
-		print('[DEBUG] M3U8 Link: {}'.format(m3u8link))
-		print('[DEBUG] Video title: {}'.format(title))
-		print('[DEBUG] Episode number: {}'.format(epnum))
+
+	if is_channel(url):
+		req = session.get(_CHANNELAPI + eplink)
+		if verbose and req.status_code == 200:
+			print('[DEBUG] Data requested')
+			print('[DEBUG] Parsing json API')
+		jsdata = req.json()
+		title = jsdata['slot']['title']
+		hls = jsdata['slot']['chasePlayback']['hls']
+
+		m3u8link = '{x}/{r}/playlist.m3u8'.format(x=hls[:hls.rfind('/')], r=res[:-1])
+
+		if verbose:
+			print('[DEBUG] M3U8 Link: {}'.format(m3u8link))
+			print('[DEBUG] Title: {}'.format(title))
+
+		return title, m3u8link
+	else:
+		req = session.get(_PROGRAMAPI + eplink)
+		if verbose and req.status_code == 200:
+			print('[DEBUG] Data requested')
+			print('[DEBUG] Parsing json API')
+		jsdata = req.json()
+		title = jsdata['series']['title']
+		epnum = jsdata['episode']['title']
+		hls = jsdata['playback']['hls']
+		outputfile = title + ' - ' + epnum
 		
-	return title, epnum, m3u8link
+		m3u8link = '{x}/{r}/playlist.m3u8'.format(x=hls[:hls.rfind('/')], r=res[:-1])
+		
+		if verbose:
+			print('[DEBUG] M3U8 Link: {}'.format(m3u8link))
+			print('[DEBUG] Video title: {}'.format(title))
+			print('[DEBUG] Episode number: {}'.format(epnum))
+			
+		return outputfile, m3u8link
