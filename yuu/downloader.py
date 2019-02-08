@@ -7,9 +7,7 @@ from binascii import unhexlify
 from Crypto.Cipher import AES
 from .parser import fetchVideoKey, getAuthToken, parsem3u8
 
-def decryptData(tsdata, key, iv, verbose):
-	if verbose:
-		print('[DEBUG] Decrypting data')
+def decryptData(tsdata, key, iv):
 	def _decrypt(d, k, iv):
 		dec = AES.new(k, AES.MODE_CBC, IV=iv)
 		return dec.decrypt(d)
@@ -35,7 +33,7 @@ def getVideo(fileslist, key, iv, session, verbose):
 				with open(outputtemp, 'wb') as outf:
 					try:
 						req = session.get(tsf)
-						outf.write(decryptData(req.content, key, iv, verbose))
+						outf.write(decryptData(req.content, key, iv))
 					except Exception as err:
 						print('[ERROR] Problem occured\nreason: {}'.format(err))
 						import sys; sys.exit(1)
@@ -50,10 +48,9 @@ def getVideo(fileslist, key, iv, session, verbose):
 			outputtemp = os.path.join(tempdir, outputtemp)
 			with open(outputtemp, 'wb') as outf:
 				try:
-					print('[DEBUG] Requesting content for: {}'.format(otpt))
+					print('[DEBUG][DOWN] Requesting & decrypting content for: {}'.format(otpt))
 					req = session.get(tsf)
-					print('[DEBUG][DOWN] Decrypting content: {}'.format(otpt))
-					outf.write(decryptData(req.content, key, iv, verbose))
+					outf.write(decryptData(req.content, key, iv))
 				except Exception as err:
 					print('[ERROR] Problem occured\nreason: {}'.format(err))
 					import sys; sys.exit(1)

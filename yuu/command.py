@@ -3,7 +3,7 @@ import shutil
 import sys
 
 from .downloader import *
-from .parser import webparse, parsem3u8
+from .parser import webparse, webparse_m3u8, parsem3u8
 from .common import __version__
 
 def main():
@@ -16,7 +16,7 @@ def main():
     parser.add_argument('input', help='AbemaTV url site or m3u8')
 
     args = parser.parse_args()
-    print('[INFO] Starting yuu...')
+    print('[INFO] Starting yuu {ver}...'.format(ver=__version__))
 
     if args.proxy:
         print('[INFO] Testing proxy')
@@ -70,7 +70,7 @@ def main():
 	
     if args.input[-5:] != '.m3u8':
         print('[INFO] Parsing website')
-        dltitle, eptitle, m3u8link = webparse(args.input, args.res, sesi, args.verbose)
+        outputtitle, m3u8link = webparse(args.input, args.res, sesi, args.verbose)
         print('[INFO] Parsing m3u8')
         files, iv, ticket = parsem3u8(m3u8link, sesi, args.verbose)
         if args.output:
@@ -79,19 +79,20 @@ def main():
             else:
                 output = args.output + '.ts'
         else:
-            output = '{x} - {y} (AbemaTV {z}).ts'.format(x=dltitle, y=eptitle, z=args.res)
+            output = '{x} (AbemaTV {r}).ts'.format(x=outputtitle, r=args.res)
         if args.verbose:
             print('[DEBUG] Output file: {}'.format(output))
     elif args.input[-5:] == '.m3u8':
         print('[INFO] Parsing m3u8')
+        outputtitle, res = webparse_m3u8(args.input, sesi, args.verbose)
         files, iv, ticket = parsem3u8(args.input, sesi, args.verbose)
-        if args.output is None:
-            print('[ERROR] Please provide output')
-            sys.exit(1)
-        if args.output[-3:] == '.ts':
-            output = args.output
+        if args.output:
+            if args.output[-3:] == '.ts':
+                output = args.output
+            else:
+                output = args.output + '.ts'
         else:
-            output = args.output + '.ts'
+            output = '{x} (AbemaTV {r}).ts'.format(x=outputtitle, r=res)
 
     print('[INFO] Fetching m3u8 key')
     getkey = fetchVideoKey(ticket, authtoken, sesi, args.verbose)
