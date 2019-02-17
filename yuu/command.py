@@ -94,6 +94,11 @@ def main():
         else:
             output = '{x} (AbemaTV {r}).ts'.format(x=outputtitle, r=res)
 
+    # Don't use forbidden/illegal character (replace it with underscore)
+    illegalchar = ['/', '<', '>', ':', '"', '\\', '|', '?', '*'] # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
+    for char in illegalchar:
+        output = output.replace(char, '_')
+
     print('[INFO] Fetching m3u8 key')
     getkey = fetchVideoKey(ticket, authtoken, sesi, args.verbose)
     
