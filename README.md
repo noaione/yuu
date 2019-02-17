@@ -41,7 +41,7 @@ optional arguments:
   --version, -V         show program's version number and exit
   --verbose, -v         Enable verbose
 
-Created by NoAiOne - Version 0.1.4.1
+Created by NoAiOne - Version 0.1.4.2
 ```
 
 - **`--proxies/-p`**: Download using proxy for people outside Japan

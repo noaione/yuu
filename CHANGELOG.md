@@ -38,3 +38,6 @@
 - Added some support for `channel` or `slots` url things
 - Make some auto-output-parser thingy for direct m3u8 link
 - Cleaning some code
+
+#### Version 0.1.4.2
+- Add Illegal/Forbidden character replacer
