@@ -1,0 +1,11 @@
+.vscode
+*.m3u8
+*.egg-info
+build
+dist
+__pycache__
+.pyc
+*.ts
+*.mkv
+venv
+.idea
