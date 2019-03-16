@@ -55,7 +55,7 @@ def get_video(fileslist, key, iv, session, verbose):
 			dledfiles.append(outputtemp)
 
 	return [dledfiles, tempdir]
-	
+
 def merge_video(inp, out):
 	with open(out, 'wb') as outf:
 		with tqdm(total=len(inp), desc='Merging', ascii=True, unit='file') as pbar:

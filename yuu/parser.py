@@ -77,11 +77,11 @@ def get_auth_token(session, verbose):
 	deviceid = str(uuid.uuid4())
 	if verbose:
 		print('[DEBUG] Generated Device UUID: {}'.format(deviceid))
-	jsonData = {"deviceId": deviceid, "applicationKeySecret": keySecret(deviceid)}
+		json_data = {"deviceId": deviceid, "applicationKeySecret": key_secret(deviceid)}
 	
 	if verbose:
 		print('[DEBUG] Sending json data')
-	res = session.post(_USERAPI, json=jsonData).json()
+	res = session.post(_USERAPI, json=json_data).json()
 
 	try:
 		if verbose:
@@ -143,14 +143,14 @@ def fetch_video_key(ticket=None, authToken=None, session=None, verbose=False):
 	
 	return vkey
 
-def parsem3u8(m3u8, session, verbose):
+def parsem3u8(hls, session, verbose):
 	if verbose:
 		print('[DEBUG] Requesting m3u8')
-	r = session.get(m3u8)
+	r = session.get(hls)
 	if verbose and r.status_code == 200:
 		print('[DEBUG] m3u8 requested')
 		print('[DEBUG] Parsing m3u8')
-	x = M3U8.loads(r.text)
+	x = m3u8.loads(r.text)
 	files = x.files
 	iv = x.keys[0].iv
 	ticket = x.keys[0].uri[18:]
