@@ -22,7 +22,7 @@ def main():
     if args.proxy:
         print('[INFO] Testing proxy')
         sesi.proxies = {'http': args.proxy, 'https': args.proxy}
-        # Somebody tell me how to do recursive test properly
+        # Someebody tell me how to do recursive test properly
         try:
             if args.verbose:
                 print('[DEBUG] Testing http+https mode proxy')
@@ -105,7 +105,6 @@ def main():
     print('[INFO][DOWN] Finished downloading')
     print('[INFO] Merging video')
     merge_video(dllist, output)
-    print('[INFO] Finished merging')
 
     print('[INFO] Cleaning up')
     shutil.rmtree(tempdir)
