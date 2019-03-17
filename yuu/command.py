@@ -22,7 +22,7 @@ def main():
     if args.proxy:
         print('[INFO] Testing proxy')
         sesi.proxies = {'http': args.proxy, 'https': args.proxy}
-        # Someebody tell me how to do recursive test properly
+        # Somebody tell me how to do recursive test properly
         try:
             if args.verbose:
                 print('[DEBUG] Testing http+https mode proxy')
