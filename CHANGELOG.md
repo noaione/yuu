@@ -41,3 +41,8 @@
 
 #### Version 0.1.4.2
 - Add Illegal/Forbidden character replacer
+
+#### Version 0.1.5
+- Tabs -> Spaces Indentation
+- Add `--resolutions` for showing list of available resolution
+- Some fixes for the API changes
