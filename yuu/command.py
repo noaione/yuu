@@ -3,13 +3,14 @@ import shutil
 import requests
 
 from .downloader import get_video, merge_video
-from .parser import webparse, webparse_m3u8, parsem3u8, fetch_video_key, get_auth_token
+from .parser import webparse, webparse_m3u8, parsem3u8, fetch_video_key, get_auth_token, available_resolution
 from .common import __version__
 
 def main():
     parser = argparse.ArgumentParser(prog='yuu', description='A simple AbemaTV video downloader', epilog='Created by NoAiOne - Version {v}'.format(v=__version__))
-    parser.add_argument('--proxies', '-p', required=False, default=None, dest='proxy', help='Use http(s)/socks5 proxies (please add `socks5://` if you use socks5)')
+    parser.add_argument('--proxy', '-p', required=False, default=None, dest='proxy', help='Use http(s)/socks5 proxies (please add `socks5://` if you use socks5)')
     parser.add_argument('--resolution', '-r', required=False, default='1080p', dest='res', choices=['180p', '240p', '360p', '480p', '720p', '1080p'], help='Resolution (Default: 1080p)')
+    parser.add_argument('--resolutions', '-R', action='store_true', dest='resR', help='Show available resolution')
     parser.add_argument('--output', '-o', required=False, default=None, dest='output', help='Output filename')
     parser.add_argument('--version', '-V', action='version', version='%(prog)s {v} - Created by NoAiOne'.format(v=__version__))
     parser.add_argument('--verbose', '-v', action='store_true', help="Enable verbose")
@@ -67,10 +68,17 @@ def main():
     sesi.headers.update({'Authorization': authtoken[0]})
 
     if args.input[-5:] != '.m3u8':
-        print('[INFO] Parsing website')
+        print('[INFO] Parsing webpage')
         outputtitle, m3u8link = webparse(args.input, args.res, sesi, args.verbose)
+        if args.resR:
+            print('[INFO] Checking available resolution')
+            avares = available_resolution(m3u8link, sesi, args.verbose)
+            print('[INFO] Available resolution:')
+            for res in avares:
+                print('>> ' + res)
+            exit(0)
         print('[INFO] Parsing m3u8')
-        files, iv, ticket = parsem3u8(m3u8link, sesi, args.verbose)
+        files, iv, ticket = parsem3u8(m3u8link, args.res, sesi, args.verbose)
         if args.output:
             if args.output[-3:] == '.ts':
                 output = args.output
@@ -80,10 +88,10 @@ def main():
             output = '{x} (AbemaTV {r}).ts'.format(x=outputtitle, r=args.res)
         if args.verbose:
             print('[DEBUG] Output file: {}'.format(output))
-    elif args.input[-5:] == '.m3u8':
+    else:
         print('[INFO] Parsing m3u8')
         outputtitle, res = webparse_m3u8(args.input, sesi, args.verbose)
-        files, iv, ticket = parsem3u8(args.input, sesi, args.verbose)
+        files, iv, ticket = parsem3u8(args.input, args.res, sesi, args.verbose)
         if args.output:
             if args.output[-3:] == '.ts':
                 output = args.output
