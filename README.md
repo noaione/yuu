@@ -6,6 +6,7 @@ A simple AbemaTV video downloader in python
 [![pypi version](https://img.shields.io/pypi/v/yuu.svg?style=for-the-badge)](https://pypi.org/project/yuu/) [![python version](https://img.shields.io/pypi/pyversions/yuu.svg?style=for-the-badge)](#) [![License](https://img.shields.io/github/license/noaione/yuu.svg?style=for-the-badge)](https://github.com/noaione/yuu/blob/master/LICENSE)
 
 ## Requirements
+- click
 - pycryptodome
 - Python 3.5+
 - m3u8
@@ -19,28 +20,34 @@ or clone this project and type `pip install .`
 
 ## Usage
 ```
-usage: yuu [-h] [--proxies PROXY]
-           [--resolution {180p,240p,360p,480p,720p,1080p}] [--resolutions]
-           [--output OUTPUT] [--version] [--verbose]
-           input
+>> yuu -h
+Usage: yuu [OPTIONS] COMMAND [ARGS]...
 
-A simple AbemaTV video downloader
+  A simple AbemaTV video downloader
 
-positional arguments:
-  input                 AbemaTV url site or m3u8
+Options:
+  -V, --version  Show current version
+  -U, --update   Update yuu to the newest version
+  -h, --help     Show this message and exit.
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --proxy, -p           Use http(s)/socks5 proxies (please add `socks5://` if
-                        you use socks5)
-  --resolution, -r      180p, 240p, 360p, 480p, 720p, or 1080p
-                        Resolution (Default: 1080p)
-  --resolutions, -R     Show available resolution
-  --output, -o          Output filename
-  --version, -V         show program's version number and exit
-  --verbose, -v         Enable verbose
+Commands:
+  download  Download video from abema.tv
 
-Created by NoAiOne - Version 0.1.5
+///////////////////////////////////////////////////
+>> yuu download -h
+Usage: yuu download [OPTIONS] <AbemaTV url site or m3u8>
+
+  Download a free video from abema
+
+Options:
+  -p, --proxy <ip:port/url>       Use http(s)/socks5 proxies (please add
+                                  `socks5://` if you use socks5)
+  -r, --resolution [180p|240p|360p|480p|720p|1080p]
+                                  Resolution to be downloaded (Default: 1080p)
+  -R, --resolutions               Show available resolutions
+  -o, --output TEXT               Output filename
+  -v, --verbose                   Enable verbosity
+  -h, --help                      Show this message and exit.
 ```
 
 - **`--proxies/-p`**: Download using proxy for people outside Japan
@@ -54,19 +61,19 @@ Created by NoAiOne - Version 0.1.5
 **Information: Please use HTTPS proxy for now, it tested and works. SOCKS5 are not tested yet and HTTP doesn't work**
 
 Example command: 
-- >`yuu -R https://abema.tv/video/episode/54-25_s1_p1`
+- >`yuu download -R https://abema.tv/video/episode/54-25_s1_p1`
 
     Show available resolution for `Yagate Kimi ni Naru` episode 01
-- >`yuu https://abema.tv/video/episode/54-25_s1_p1`
+- >`yuu download https://abema.tv/video/episode/54-25_s1_p1`
 
     Download 1080p video of `Yagate Kimi ni Naru` episode 01
-- >`yuu https://abema.tv/video/episode/54-25_s1_p1 -r 480p`
+- >`yuu download https://abema.tv/video/episode/54-25_s1_p1 -r 480p`
 
     Download 480p video of `Yagate Kimi ni Naru` episode 01
-- >`yuu https://ds-vod-abematv.akamaized.net/program/54-25_s1_p1/1080/playlist.m3u8 -o '5toubun01.ts'`
+- >`yuu download https://ds-vod-abematv.akamaized.net/program/54-25_s1_p1/1080/playlist.m3u8 -o '5toubun01.ts'`
 
     Download 1080p video from m3u8 link
-- >`yuu https://abema.tv/video/episode/54-25_s1_p1 -p '127.0.0.1:3128`
+- >`yuu download https://abema.tv/video/episode/54-25_s1_p1 -p '127.0.0.1:3128`
 
     Download 480p video of `Yagate Kimi ni Naru` episode 01 using 127.0.0.1:3128 proxy
 
