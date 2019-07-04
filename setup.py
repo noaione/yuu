@@ -24,7 +24,8 @@ setuptools.setup(
         'requests[socks]', 
         'm3u8', 
         'tqdm', 
-        'pycryptodome'
+        'pycryptodome',
+        'click'
     ],
     classifiers = [
         'Development Status :: 5 - Production/Stable', 
