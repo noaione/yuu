@@ -46,3 +46,10 @@
 - Tabs -> Spaces Indentation
 - Add `--resolutions` for showing list of available resolution
 - Some fixes for the API changes
+
+### Version 0.2.0
+- Change from argparse to click for commands parsing
+- Add updater to make sure people using the newest version
+- Fix some check
+- Add a error handling if the video cannot be dowwnloaded
+- Cleaning the code

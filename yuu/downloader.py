@@ -55,7 +55,7 @@ def get_video(fileslist, key, iv, session, verbose):
                     exit(1)
             dledfiles.append(outputtemp)
 
-    return [dledfiles, tempdir]
+    return dledfiles, tempdir
 
 
 def merge_video(inp, out):

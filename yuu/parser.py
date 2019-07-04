@@ -26,51 +26,33 @@ def get_auth_token(session, verbose):
         h.update(SECRETKEY)
         tmp = h.digest()
 
-        if verbose:
-            print('[DEBUG] First salting data: {}'.format(tmp))
-
         for i in range(time_struct.tm_mon):
             h = hmac.new(SECRETKEY, digestmod=hashlib.sha256)
             h.update(tmp)
             tmp = h.digest()
 
-        if verbose:
-            print('[DEBUG] Second salting data: {}'.format(tmp))
-
         h = hmac.new(SECRETKEY, digestmod=hashlib.sha256)
         h.update(urlsafe_b64encode(tmp).rstrip(b"=") + deviceid)
         tmp = h.digest()
-
-        if verbose:
-            print('[DEBUG] Third salting data: {}'.format(tmp))
 
         for i in range(time_struct.tm_mday % 5):
             h = hmac.new(SECRETKEY, digestmod=hashlib.sha256)
             h.update(tmp)
             tmp = h.digest()
 
-        if verbose:
-            print('[DEBUG] Fourth salting data: {}'.format(tmp))
-
         h = hmac.new(SECRETKEY, digestmod=hashlib.sha256)
         h.update(urlsafe_b64encode(tmp).rstrip(b"=") + ts_1hour_str)
         tmp = h.digest()
-
-        if verbose:
-            print('[DEBUG] Fifth salting data: {}'.format(tmp))
 
         for i in range(time_struct.tm_hour % 5):  # utc hour
             h = hmac.new(SECRETKEY, digestmod=hashlib.sha256)
             h.update(tmp)
             tmp = h.digest()
 
-        if verbose:
-            print('[DEBUG] Last salting data: {}'.format(tmp))
-
         finalize = urlsafe_b64encode(tmp).rstrip(b"=").decode("utf-8")
 
         if verbose:
-            print('[DEBUG] Key secret result: {}'.format(finalize))
+            print('[DEBUG] Secret Key: {}'.format(finalize))
 
         return finalize
 
@@ -91,7 +73,7 @@ def get_auth_token(session, verbose):
             print('[DEBUG] Usertoken: {}'.format(token))
     except:
         print('[ERROR] Failed to get usertoken')
-        import sys; sys.exit(1)
+        exit(1)
 
     return ['bearer ' + token, deviceid]
 
@@ -150,14 +132,21 @@ def parsem3u8(hls, res, session, verbose):
         print('[DEBUG] Requesting m3u8')
     r = session.get(hls)
     if verbose and r.status_code == 200:
-        print('[DEBUG] m3u8 requested')
-        print('[DEBUG] Parsing m3u8')
+        if r.status_code == 200:
+            print('[DEBUG] m3u8 requested')
+            print('[DEBUG] Parsing m3u8')
+        elif r.status_code == 403:
+            print('[DEBUG] Forbidden access to the m3u8 url')
+            print('[DEBUG] Probably a premium video.')
+    if r.status_code == 403:
+        print('[ERROR] Cannot download a premium video.')
+        exit(1)
     x = m3u8.loads(r.text)
     files = x.files
     resgex = re.findall(r'(\d*)(?:\/\w+.ts)', files[1])[0]
     iv = x.keys[0].iv
     ticket = x.keys[0].uri[18:]
-    if res != resgex:
+    if res[:-1] != resgex:
         print('[WARN] Resolution {} are not available'.format(res))
         print('[WARN] Switching to {}p'.format(resgex))
     if verbose:
@@ -215,7 +204,7 @@ def available_resolution(m3u8_, session, verbose):
 def webparse_m3u8(m3u8, session, verbose):
     if verbose:
         print('[DEBUG] Requesting data to API')
-    reg = re.compile('(program|slot)\/[\w+-]+')
+    reg = re.compile(r'(program|slot)\/[\w+-]+')
     res = re.search(reg, m3u8)[0]
     eplink = res[res.find('/')+1:]
 
