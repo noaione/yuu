@@ -4,7 +4,7 @@
 
 [![pypi version](https://img.shields.io/pypi/v/yuu.svg?style=for-the-badge)](https://pypi.org/project/yuu/) [![python version](https://img.shields.io/pypi/pyversions/yuu.svg?style=for-the-badge)](#) [![License](https://img.shields.io/github/license/noaione/yuu.svg?style=for-the-badge)](https://github.com/noaione/yuu/blob/master/LICENSE)
 
-#### Version 0.1
+### Version 0.1
 - First release
 
 #### Version 0.1.1
@@ -54,7 +54,7 @@
 - Add a error handling if the video cannot be dowwnloaded
 - Cleaning the code
 
-### Version 0.2.1
+#### Version 0.2.1
 - Make a proper error message
 - Add KeyboardInterrupt Handler while downloading, so it will delete the temporary folder
 - Made updater a little bit nicer (Added changelog to the output)
