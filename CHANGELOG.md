@@ -53,3 +53,9 @@
 - Fix some check
 - Add a error handling if the video cannot be dowwnloaded
 - Cleaning the code
+
+### Version 0.2.1
+- Make a proper error message
+- Add KeyboardInterrupt Handler while downloading, so it will delete the temporary folder
+- Made updater a little bit nicer (Added changelog to the output)
+- Add more information to `--resolutions` option
