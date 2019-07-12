@@ -1,6 +1,6 @@
 import re
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 _STRTABLE = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 _HKEY = b"3AF0298C219469522A313570E8583005A642E73EDD58E3EA2FB7339D3DF1597E"
@@ -25,3 +25,13 @@ def is_channel(url):
     if url:
         return True
     return False
+
+
+res_data = {
+    "1080p": ["4000kb/s", "AAC 192kb/s 2ch"],
+    "720p": ["2000kb/s", "AAC 160kb/s 2ch"],
+    "480p": ["900kb/s", "AAC 128kb/s 2ch"],
+    "360p": ["550kb/s", "AAC 128kb/s 2ch"],
+    "240p": ["240kb/s", "AAC 64kb/s 1ch"],
+    "180p": ["120kb/s", "AAC 64kb/s 1ch"]
+}

@@ -22,38 +22,42 @@ def get_video(fileslist, key, iv, session, verbose):
     tempdir = tempfile.mkdtemp()
     dledfiles = []
 
-    if not verbose:
-        with tqdm(total=len(fileslist), desc='Downloading', ascii=True, unit='file') as pbar:
+    try:
+        if not verbose:
+            with tqdm(total=len(fileslist), desc='Downloading', ascii=True, unit='file') as pbar:
+                for tsf in fileslist:
+                    outputtemp = os.path.basename(tsf)
+                    if outputtemp.find('?tver') != -1:
+                        outputtemp = outputtemp[:outputtemp.find('?tver')]
+                    outputtemp = tempdir + '\\' + outputtemp
+                    with open(outputtemp, 'wb') as outf:
+                        try:
+                            req = session.get(tsf)
+                            outf.write(decrypt_data(req.content, key, iv))
+                        except Exception as err:
+                            print('[ERROR] Problem occured\nreason: {}'.format(err))
+                            exit(1)
+                    pbar.update()
+                    dledfiles.append(outputtemp)
+        elif verbose:
             for tsf in fileslist:
                 outputtemp = os.path.basename(tsf)
                 if outputtemp.find('?tver') != -1:
                     outputtemp = outputtemp[:outputtemp.find('?tver')]
-                outputtemp = tempdir + '\\' + outputtemp
+                otpt = outputtemp
+                outputtemp = os.path.join(tempdir, outputtemp)
                 with open(outputtemp, 'wb') as outf:
                     try:
+                        print('[DEBUG][DOWN] Requesting & decrypting content for: {}'.format(otpt))
                         req = session.get(tsf)
                         outf.write(decrypt_data(req.content, key, iv))
                     except Exception as err:
                         print('[ERROR] Problem occured\nreason: {}'.format(err))
                         exit(1)
-                pbar.update()
                 dledfiles.append(outputtemp)
-    elif verbose:
-        for tsf in fileslist:
-            outputtemp = os.path.basename(tsf)
-            if outputtemp.find('?tver') != -1:
-                outputtemp = outputtemp[:outputtemp.find('?tver')]
-            otpt = outputtemp
-            outputtemp = os.path.join(tempdir, outputtemp)
-            with open(outputtemp, 'wb') as outf:
-                try:
-                    print('[DEBUG][DOWN] Requesting & decrypting content for: {}'.format(otpt))
-                    req = session.get(tsf)
-                    outf.write(decrypt_data(req.content, key, iv))
-                except Exception as err:
-                    print('[ERROR] Problem occured\nreason: {}'.format(err))
-                    exit(1)
-            dledfiles.append(outputtemp)
+    except KeyboardInterrupt:
+        print('[WARN] User pressed CTRL+C, cleaning up...')
+        return None, tempdir
 
     return dledfiles, tempdir
 

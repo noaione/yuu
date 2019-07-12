@@ -9,3 +9,4 @@ __pycache__
 *.mkv
 venv
 .idea
+*.bat
