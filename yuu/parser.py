@@ -88,7 +88,14 @@ def fetch_video_key(ticket=None, authToken=None, session=None, verbose=False):
 
     if verbose:
         print('[DEBUG] Sending ticket and mediatoken to License API')
-    gl = session.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket}).json()
+    rgl = session.post(_LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket})
+    if rgl.status_code == 403:
+        print('[ERROR] Access to the video are not allowed\nProbably a premium video or geo-locked.')
+        if verbose:
+            print('[ERROR] Code 403: ' + rgl.text)
+        exit(1)
+
+    gl = rgl.json()
 
     cid = gl['cid']
     k = gl['k']
@@ -139,7 +146,9 @@ def parsem3u8(hls, res, session, verbose):
             print('[DEBUG] Forbidden access to the m3u8 url')
             print('[DEBUG] Probably a premium video.')
     if r.status_code == 403:
-        print('[ERROR] Cannot download a premium video.')
+        print('[ERROR] Video are geo-locked to Japanese only.')
+        if verbose:
+            print('[ERROR] Code 403: ' + r.text)
         exit(1)
     x = m3u8.loads(r.text)
     files = x.files
@@ -168,12 +177,18 @@ def available_resolution(m3u8_, session, verbose):
     m3u8_240 = m3u8_[:m3u8_.rfind('/')] + '/240/playlist.m3u8'
     m3u8_180 = m3u8_[:m3u8_.rfind('/')] + '/180/playlist.m3u8'
 
+    rr_all = session.get(m3u8_[:m3u8_.rfind('/')] + '/playlist.m3u8').text
+    r_all = m3u8.loads(rr_all)
     r1080 = m3u8.loads(session.get(m3u8_1080).text)
     r720 = m3u8.loads(session.get(m3u8_720).text)
     r480 = m3u8.loads(session.get(m3u8_480).text)
     r360 = m3u8.loads(session.get(m3u8_360).text)
     r240 = m3u8.loads(session.get(m3u8_240).text)
     r180 = m3u8.loads(session.get(m3u8_180).text)
+
+    play_res = []
+    for r_p in r_all.playlists:
+        play_res.append(list(r_p.stream_info.resolution))
 
     x1080 = r1080.files[1:][0]
     x720 = r720.files[1:][0]
@@ -186,17 +201,41 @@ def available_resolution(m3u8_, session, verbose):
 
     ava_reso = []
     if '1080' in re.findall(resgex, x1080):
-        ava_reso.append('1080p')
+        temp_ = ['1080p']
+        for r in play_res:
+            if 1080 in r:
+                temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
+        ava_reso.append(temp_)
     if '720' in re.findall(resgex, x720):
-        ava_reso.append('720p')
+        temp_ = ['720p']
+        for r in play_res:
+            if 720 in r:
+                temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
+        ava_reso.append(temp_)
     if '480' in re.findall(resgex, x480):
-        ava_reso.append('480p')
+        temp_ = ['480p']
+        for r in play_res:
+            if 480 in r:
+                temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
+        ava_reso.append(temp_)
     if '360' in re.findall(resgex, x360):
-        ava_reso.append('360p')
+        temp_ = ['360p']
+        for r in play_res:
+            if 360 in r:
+                temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
+        ava_reso.append(temp_)
     if '240' in re.findall(resgex, x240):
-        ava_reso.append('240p')
+        temp_ = ['240p']
+        for r in play_res:
+            if 240 in r:
+                temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
+        ava_reso.append(temp_)
     if '180' in re.findall(resgex, x180):
-        ava_reso.append('180p')
+        temp_ = ['180p']
+        for r in play_res:
+            if 180 in r:
+                temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
+        ava_reso.append(temp_)
 
     return ava_reso
 

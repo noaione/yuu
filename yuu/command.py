@@ -1,11 +1,11 @@
 import click
 import shutil
 import requests
-from subprocess import check_call as run
+import subprocess
 
 from .downloader import get_video, merge_video
 from .parser import webparse, webparse_m3u8, parsem3u8, fetch_video_key, get_auth_token, available_resolution
-from .common import __version__
+from .common import res_data, __version__
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_options=True)
 
@@ -21,12 +21,21 @@ def cli(version=False, update=False):
         exit(0)
     if update:
         print('[INFO] Updating yuu...'.format(ver=__version__))
-        upstream_version = requests.get("https://pastebin.com/raw/Z5mVFDa8").text
+        upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
+        upstream_version = upstream_data['version']
+        upstream_change = upstream_data['changelog']
         if upstream_version == __version__:
             print('[INFO] Already on the newest version.')
             exit(0)
         print('[INFO] Updating to yuu version {} (Current: v{})'.format(upstream_version, __version__))
-        run('pip install -U yuu=={}'.format(upstream_version))
+
+        try:
+            subprocess.check_call('pip install -U yuu=={}'.format(upstream_version))
+        except subprocess.CalledProcessError:
+            print('[ERROR] Updater returned non-zero exit code')
+            exit(1)
+        print('\n=== yuu version {} changelog ==='.format(upstream_version))
+        print(upstream_change+'\n')
         print('[INFO] Updated.')
         exit(0)
 
@@ -42,9 +51,10 @@ def main_downloader(input, proxy, res, resR, output, verbose):
     """Download a free video from abema"""
     print('[INFO] Starting yuu v{ver}...'.format(ver=__version__))
 
-    upstream_version = requests.get("https://pastebin.com/raw/Z5mVFDa8").text
+    upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
+    upstream_version = upstream_data['version']
     if upstream_version != __version__:
-        print('[INFO] New version detected, please update using `yuu -U` before continuing.')
+        print('[INFO] There\'s new version available to download, please update using `yuu -U`.')
         exit(0)
 
     sesi = requests.Session()
@@ -102,8 +112,11 @@ def main_downloader(input, proxy, res, resR, output, verbose):
             print('[INFO] Checking available resolution')
             avares = available_resolution(m3u8link, sesi, verbose)
             print('[INFO] Available resolution:')
+            print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("", "Resolution", "Video Quality", "Audio Quality", width=16))
             for res in avares:
-                print('>> ' + res)
+                r_c, wxh = res
+                vidq, audq = res_data[r_c]
+                print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
             exit(0)
         print('[INFO] Parsing m3u8')
         files, iv, ticket = parsem3u8(m3u8link, res, sesi, verbose)
@@ -137,7 +150,12 @@ def main_downloader(input, proxy, res, resR, output, verbose):
     getkey = fetch_video_key(ticket, authtoken, sesi, verbose)
     
     print('[INFO][DOWN] Starting downloader...')
+    print('[INFO][DOWN] Resolution: {}'.format(res))
     dllist, tempdir = get_video(files, getkey, iv, sesi, verbose)
+    if not dllist:
+        if tempdir:
+            shutil.rmtree(tempdir)
+        exit(0)
     print('[INFO][DOWN] Finished downloading')
     print('[INFO] Merging video')
     merge_video(dllist, output)
