@@ -1,11 +1,14 @@
-import click
+import os
 import shutil
-import requests
 import subprocess
 
+import click
+import requests
+
+from .common import __version__, isUserAdmin, res_data, runAsAdmin
 from .downloader import get_video, merge_video
-from .parser import webparse, webparse_m3u8, parsem3u8, fetch_video_key, get_auth_token, available_resolution
-from .common import res_data, __version__
+from .parser import (available_resolution, fetch_video_key, get_auth_token,
+                     parsem3u8, webparse, webparse_m3u8)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_options=True)
 
@@ -30,9 +33,18 @@ def cli(version=False, update=False):
         print('[INFO] Updating to yuu version {} (Current: v{})'.format(upstream_version, __version__))
 
         try:
-            subprocess.check_call('pip install -U yuu=={}'.format(upstream_version))
-        except subprocess.CalledProcessError:
+            if isUserAdmin():
+                if os.name != "nt":
+                    print('[WARN] Run this command to update yuu: `pip3 install -U yuu=={}`'.format(upstream_version))
+                    exit(1)
+                from win32com.shell.shell import ShellExecuteEx
+                ShellExecuteEx(lpVerb='runas', lpFile='pip', lpParameters='install -U yuu=={}'.format(upstream_version))
+            else:
+                print('[WARN] Run this command to update yuu: `pip install -U yuu=={}`'.format(upstream_version))
+                exit(1)
+        except:
             print('[ERROR] Updater returned non-zero exit code')
+            print('Try to run `pip install -U yuu={}` manually'.format(upstream_version))
             exit(1)
         print('\n=== yuu version {} changelog ==='.format(upstream_version))
         print(upstream_change+'\n')
