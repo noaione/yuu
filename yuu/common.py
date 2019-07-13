@@ -1,6 +1,7 @@
+import os
 import re
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 _STRTABLE = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 _HKEY = b"3AF0298C219469522A313570E8583005A642E73EDD58E3EA2FB7339D3DF1597E"
@@ -35,3 +36,18 @@ res_data = {
     "240p": ["240kb/s", "AAC 64kb/s 1ch"],
     "180p": ["120kb/s", "AAC 64kb/s 1ch"]
 }
+
+"""
+Admin Check Code from https://gist.github.com/sylvainpelissier/ff072a6759082590a4fe8f7e070a4952
+"""
+def isUserAdmin():
+    if os.name == 'nt':
+        import ctypes
+        # WARNING: requires Windows XP SP2 or higher!
+        try:
+            return ctypes.windll.shell32.IsUserAnAdmin()
+        except:
+            print("Admin check failed, assuming not an admin.")
+            return False
+    else:
+        return os.getuid() == 0
