@@ -5,7 +5,7 @@ import subprocess
 import click
 import requests
 
-from .common import __version__, isUserAdmin, res_data, runAsAdmin
+from .common import __version__, isUserAdmin, res_data
 from .downloader import get_video, merge_video
 from .parser import (available_resolution, fetch_video_key, get_auth_token,
                      parsem3u8, webparse, webparse_m3u8)
