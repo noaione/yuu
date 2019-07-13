@@ -1,7 +1,7 @@
 import os
 import re
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 
 _STRTABLE = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 _HKEY = b"3AF0298C219469522A313570E8583005A642E73EDD58E3EA2FB7339D3DF1597E"
