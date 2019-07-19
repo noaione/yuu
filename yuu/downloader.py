@@ -5,68 +5,55 @@ from binascii import unhexlify
 from Crypto.Cipher import AES
 from tqdm import tqdm
 
-def decrypt_data(tsdata, key, iv):
-    def _decrypt(d, k, iv):
-        dec = AES.new(k, AES.MODE_CBC, IV=iv)
-        return dec.decrypt(d)
+
+def decrypt_ts(data, key, iv):
+    def _decryptor(d, k, i):
+        return AES.new(k, AES.MODE_CBC, IV=iv).decrypt(d)
 
     if iv.startswith('0x'):
         iv = iv[2:]
     iv = unhexlify(iv)
 
-    return _decrypt(tsdata, key, iv)
+    return _decryptor(data, key, iv)
 
 
-def get_video(fileslist, key, iv, session, verbose):
+def download_chunk(files, key, iv, sesi):
     print('[INFO][DOWN] Creating temporary folder')
-    tempdir = tempfile.mkdtemp()
-    dledfiles = []
+    if os.name == "nt":
+        yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
+    else:
+        yuu_folder = os.path.join('~', '.yuu_data')
+    if not os.path.isdir(yuu_folder):
+        os.mkdir(yuu_folder)
+    
+    temp_dir = tempfile.mkdtemp(dir=yuu_folder)
+    dled_files = []
 
     try:
-        if not verbose:
-            with tqdm(total=len(fileslist), desc='Downloading', ascii=True, unit='file') as pbar:
-                for tsf in fileslist:
-                    outputtemp = os.path.basename(tsf)
-                    if outputtemp.find('?tver') != -1:
-                        outputtemp = outputtemp[:outputtemp.find('?tver')]
-                    outputtemp = tempdir + '\\' + outputtemp
-                    with open(outputtemp, 'wb') as outf:
-                        try:
-                            req = session.get(tsf)
-                            outf.write(decrypt_data(req.content, key, iv))
-                        except Exception as err:
-                            print('[ERROR] Problem occured\nreason: {}'.format(err))
-                            exit(1)
-                    pbar.update()
-                    dledfiles.append(outputtemp)
-        elif verbose:
-            for tsf in fileslist:
-                outputtemp = os.path.basename(tsf)
-                if outputtemp.find('?tver') != -1:
-                    outputtemp = outputtemp[:outputtemp.find('?tver')]
-                otpt = outputtemp
-                outputtemp = os.path.join(tempdir, outputtemp)
+        with tqdm(total=len(files), desc='Downloading', ascii=True, unit='file') as pbar:
+            for tsf in files:
+                outputtemp = temp_dir + '\\' + os.path.basename(tsf)
                 with open(outputtemp, 'wb') as outf:
                     try:
-                        print('[DEBUG][DOWN] Requesting & decrypting content for: {}'.format(otpt))
-                        req = session.get(tsf)
-                        outf.write(decrypt_data(req.content, key, iv))
+                        req = sesi.get(tsf)
+                        outf.write(decrypt_ts(req.content, key, iv))
                     except Exception as err:
                         print('[ERROR] Problem occured\nreason: {}'.format(err))
-                        exit(1)
-                dledfiles.append(outputtemp)
+                        return None, temp_dir
+                pbar.update()
+                dled_files.append(outputtemp)
     except KeyboardInterrupt:
         print('[WARN] User pressed CTRL+C, cleaning up...')
-        return None, tempdir
+        return None, temp_dir
 
-    return dledfiles, tempdir
+    return dled_files, temp_dir
 
 
-def merge_video(inp, out):
-    with open(out, 'wb') as outf:
-        with tqdm(total=len(inp), desc='Merging', ascii=True, unit='file') as pbar:
-            for i in inp:
-                with open(i, 'rb') as c:
-                    outf.write(c.read())
+def merge_video(path, output):
+    with open(output, 'wb') as out:
+        with tqdm(total=len(path), desc="Merging", ascii=True, unit="file") as pbar:
+            for i in path:
+                out.write(open(i, 'rb').read())
                 os.remove(i)
                 pbar.update()
+
