@@ -1,5 +1,14 @@
 # (koito) yuu 
-A simple AbemaTV video downloader in python
+A simple AbemaTV and other video downloader in python
+
+## THIS IS A REWRITE VERISON
+Current deployed version are at [master branch](https://github.com/noaione/yuu/tree/master)
+To install this version: `pip install git+https://github.com/noaione/yuu.git@rewrite`
+
+This version will add more website.
+Currently need help:
+- bilibili (Probably I will do it myself.)
+- Ponimu (Need help figuring out some encryption [Read Here for more info.](https://github.com/noaione/yuu/blob/rewrite/yuu/ext/ponimu.py))
 
 [![koito yuu](https://p.n4o.xyz/i/fzpt7mt.jpg)](https://anilist.co/character/123528/Yuu-Koito)
 

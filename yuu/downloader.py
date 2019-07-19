@@ -35,8 +35,10 @@ def download_chunk(files, key, iv, sesi):
                 outputtemp = temp_dir + '\\' + os.path.basename(tsf)
                 with open(outputtemp, 'wb') as outf:
                     try:
-                        req = sesi.get(tsf)
-                        outf.write(decrypt_ts(req.content, key, iv))
+                        vid = sesi.get(tsf)
+                        if key and iv: # Decrypt if there's key and IV provided
+                            vid = decrypt_ts(vid.content, key, iv)
+                        outf.write(vid)
                     except Exception as err:
                         print('[ERROR] Problem occured\nreason: {}'.format(err))
                         return None, temp_dir
