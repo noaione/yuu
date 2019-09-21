@@ -24,6 +24,7 @@ class AbemaTV:
         self.ticket = None
         self.device_id = None
         self.is_m3u8 = False
+        self.est_filesize = None
 
         self.resolution_data = {
             "1080p": ["4000kb/s", "AAC 192kb/s 2ch"],
@@ -33,6 +34,17 @@ class AbemaTV:
             "240p": ["240kb/s", "AAC 64kb/s 1ch"],
             "180p": ["120kb/s", "AAC 64kb/s 1ch"]
         }
+
+        self.bitrate_calculation = {
+            "1080p": 5175,
+            "720p": 2373,
+            "480p": 1367,
+            "360p": 878,
+            "240p": 292,
+            "180p": 179
+        }
+
+        self.authorization_required = False
 
         self._STRTABLE = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
         self._HKEY = b"3AF0298C219469522A313570E8583005A642E73EDD58E3EA2FB7339D3DF1597E"
@@ -206,13 +218,17 @@ class AbemaTV:
         ticket = x.keys[0].uri[18:]
 
         if self.resolution[:-1] != resgex:
-            print('[WARN] Resolution {} are not available'.format(self.resolution))
-            print('[WARN] Switching to {}p'.format(resgex))
+            self.resolution = resgex + 'p'
         if self.verbose:
             print('[DEBUG] Total files: {}'.format(len(files)))
             print('[DEBUG] IV: {}'.format(iv))
             print('[DEBUG] Ticket key: {}'.format(ticket))
 
+        n = 0.0
+        for seg in x.segments:
+            n += seg.duration
+
+        self.est_filesize = (round(n) * self.bitrate_calculation[self.resolution]) / 1024 / 10
         self.ticket = ticket
 
         files_ = []
