@@ -29,6 +29,7 @@ class GYAO:
             "240p-1": ["~200kb/s", "AAC 128kb/s 2ch"],
         }
 
+        self.authorization_required = False
         # Use Chrome UA
         self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'})
 

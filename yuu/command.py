@@ -107,26 +107,36 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
 
     yuuParser = yuuParser(sesi, verbose)
 
-    if 'AbemaTV' in yuuParser.type:
-        mode = 'AbemaTV'
-    elif 'GYAO' in yuuParser.type:
-        mode = 'GYAO'
+    if yuuParser.authorization_required:
+        if args.username is None and args.password is None:
+            print('[WARN] You need to be logged in to use download from this VOD')
+            exit(1)
+        result, reason = yuuParser.authorize(args.username, args.password)
+        if not result:
+            print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+            exit(1)
+    
+    if args.username and args.password and not yuuParser.authorized:
+        result, reason = yuuParser.authorize(args.username, args.password)
+        if not result:
+            print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+            exit(1)
 
-    print('[INFO] {}: Fetching user token'.format(mode))
+    print('[INFO] {}: Fetching user token'.format(yuuParser.type))
     result, reason = yuuParser.get_token()
     if not result:
-        print('[ERROR] {}: {}'.format(mode, reason))
+        print('[ERROR] {}: {}'.format(yuuParser.type, reason))
         exit(1)
 
-    print('[INFO] {}: Parsing url'.format(mode))
+    print('[INFO] {}: Parsing url'.format(yuuParser.type))
     output_name, reason = yuuParser.parse(input, res)
     if not output_name:
-        print('[ERROR] {}: {}'.format(mode, reason))
+        print('[ERROR] {}: {}'.format(yuuParser.type, reason))
         exit(1)
     if resR:
-        print('[INFO] {}: Checking available resolution'.format(mode))
+        print('[INFO] {}: Checking available resolution'.format(yuuParser.type))
         avares = yuuParser.resolutions()
-        print('[INFO] {}: Available resolution:'.format(mode))
+        print('[INFO] {}: Available resolution:'.format(yuuParser.type))
         print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("", "Resolution", "Video Quality", "Audio Quality", width=16))
         for res in avares:
             r_c, wxh = res
@@ -134,39 +144,41 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
             print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
         exit(0)
 
+    print('[INFO] {}: Parsing m3u8'.format(yuuParser.type))
+    files, iv, reason = yuuParser.parse_m3u8()
+
+    if not files:
+        print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+        exit(1)
+
+    if yuuParser.resolution != res:
+        print('[WARN] Resolution {} are not available'.format(res))
+        print('[WARN] Switching to {}'.format(yuuParser.resolution))
+        res = yuuParser.resolution
+
     if output:
         if output[-3:] == '.ts':
             output = output
         else:
             output = output + '.ts'
     else:
-        output = '{x} ({m} {r}).ts'.format(x=output_name, m=mode, r=res)
-
-    print('[INFO] {}: Parsing m3u8'.format(mode))
-    files, iv, reason = yuuParser.parse_m3u8()
-
-    if not files:
-        print('[ERROR] {}: {}'.format(mode, reason))
-        exit(1)
+        output = '{x} ({m} {r}).ts'.format(x=output_name, m=yuuParser.type, r=yuuParser.resolution)
 
     illegalchar = ['/', '<', '>', ':', '"', '\\', '|', '?', '*'] # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
     for char in illegalchar:
         output = output.replace(char, '_')
 
-    print('[INFO] {}: Fetching video key'.format(mode))
+    print('[INFO] {}: Fetching video key'.format(yuuParser.type))
     video_key, reason = yuuParser.get_video_key() #fetch_video_key(ticket, authtoken, sesi, verbose)
     if not video_key:
         if reason != 'No Encryption': # If the returned reason are 'No Encryption' it will bypass.
-            print('[ERROR] {}: {}'.format(mode, reason))
+            print('[ERROR] {}: {}'.format(yuuParser.type, reason))
             exit(1)
 
     print('[INFO][DOWN] Starting downloader...')
-    if mode == 'GYAO': # To make download faster?
-        yuuParser.session.proxies = {'http': None, 'https': None}
-        print('[INFO] GYAO: If you\'re using vpn or proxy, you can disable it now\nIf you\'re using `-p` for proxy, it will be remove')
-        input('[INFO] GYAO: Press enter to continue...')
     print('[INFO][DOWN] Output: {}'.format(output))
-    print('[INFO][DOWN] Resolution: {}'.format(res))
+    print('[INFO][DOWN] Resolution: {}'.format(yuuParser.resolution))
+    print('[INFO][DOWN] Estimated file size: {}'.format(yuuParser.est_filesize))
     dl_list, temp_dir = download_chunk(files, video_key, iv, yuuParser.session)
     if not dl_list:
         if temp_dir:
