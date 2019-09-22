@@ -1,7 +1,51 @@
 import json
+import os
 import re
+import tempfile
 
 import m3u8
+from tqdm import tqdm
+
+
+class GYAODownloader:
+    def __init__(self, files, key, iv, session):
+        self.files = files
+        self.key = key # Ignored
+        self.iv = iv # Ignored
+        self.session = session
+
+        self.downloaded_files = []
+        self.merge = True
+
+        if os.name == "nt":
+            yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
+        else:
+            yuu_folder = os.path.join('~', '.yuu_data')
+        if not os.path.isdir(yuu_folder):
+            os.mkdir(yuu_folder)
+        
+        self.temporary_folder = tempfile.mkdtemp(dir=yuu_folder)
+
+
+    def download_chunk(self):
+        try:
+            with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
+                for tsf in self.files:
+                    outputtemp = self.temporary_folder + '\\' + os.path.basename(tsf)
+                    with open(outputtemp, 'wb') as outf:
+                        try:
+                            vid = self.session.get(tsf)
+                            outf.write(vid)
+                        except Exception as err:
+                            print('[ERROR] Problem occured\nreason: {}'.format(err))
+                            return None, self.temporary_folder
+                    pbar.update()
+                    self.downloaded_files.append(outputtemp)
+        except KeyboardInterrupt:
+            print('[WARN] User pressed CTRL+C, cleaning up...')
+            return None, self.temporary_folder
+        return self.downloaded_files, self.temporary_folder
+
 
 class GYAO:
     def __init__(self, url, session, verbose=False):
@@ -30,6 +74,8 @@ class GYAO:
         }
 
         self.authorization_required = False
+        self.authorized = True # Ignore for now
+        self.authorize = True # Ignore for now
         # Use Chrome UA
         self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'})
 
@@ -37,6 +83,8 @@ class GYAO:
     def __repr__(self):
         return '<yuu.GYAO: Verbose={}, Resolution={}, m3u8 URL={}>'.format(self.verbose, self.resolution, self.m3u8_url)
 
+    def get_downloader(self):
+        return GYAODownloader # Return the class
 
     def get_token(self):
         headers = {'X-User-Agent': 'Unknown Pc GYAO!/2.0.0 Web'}
@@ -72,7 +120,7 @@ class GYAO:
         ]
 
         if resolution not in res_list:
-            return None, 'Resolution {} are non-existant. (Check it with `-R`)'
+            return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
 
         v_id = re.findall(r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|title[\w])/(?P<p1>[\w]*.*)', self.url)
         if not v_id:
@@ -198,4 +246,3 @@ class GYAO:
         Return None since there's not key decryption in GYAO
         """
         return None, 'No Encryption'
-
