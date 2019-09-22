@@ -33,7 +33,7 @@ class Ponimu:
     def __init__(self, session, verbose=False):
         self.session = session
         self.verbose = verbose
-        self.type = 'AbemaTV'
+        self.type = 'Ponimu'
 
         self.m3u8_url = None
         self.resolution = None
