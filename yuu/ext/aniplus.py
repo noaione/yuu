@@ -88,10 +88,17 @@ class Aniplus:
 
 
     def resolutions(self):
+        """
+        Return a resolutions list data
+        Since Aniplus only have one resolution available, I just return hardcoded list
+        """
         return ['720p', '1280x720']
 
 
     def parse(self, url, resolution=None):
+        """
+        Parse Aniplus data
+        """
         if self.verbose:
             print('[DEBUG] Requesting data to Aniplus')
 
@@ -119,7 +126,7 @@ class Aniplus:
     
     def get_video_key(self):
         """
-        Return None since there's not key decryption in GYAO
+        Return None since there's no key decryption in Aniplus
         """
         return None, 'No Encryption'
 
