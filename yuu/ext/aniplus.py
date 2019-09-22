@@ -84,7 +84,7 @@ class Aniplus:
 
         # Cookie are set automatically in requests after post (Via Set-Cookie in response headers)
         self.authorized = True
-        return True
+        return True, 'Authorized'
 
 
     def resolutions(self):
@@ -129,6 +129,13 @@ class Aniplus:
         Return None since there's no key decryption in Aniplus
         """
         return None, 'No Encryption'
+
+
+    def get_token(self):
+        """
+        Return empty data
+        """
+        return True, None
 
 
     def parse_m3u8(self):
