@@ -1,8 +1,10 @@
 import hashlib
 import hmac
 import json
+import os
 import re
 import struct
+import tempfile
 import time
 import uuid
 from base64 import urlsafe_b64encode
@@ -10,8 +12,72 @@ from binascii import unhexlify
 
 import m3u8
 from Crypto.Cipher import AES
+from tqdm import tqdm
 
-from ..common import is_channel
+
+def is_channel(url):
+    url = re.findall('(slot)', url)
+    if url:
+        return True
+    return False
+
+
+class AbemaTVDownloader:
+    def __init__(self, files, key, iv, session):
+        self.files = files
+        self.key = key
+        self.iv = iv
+        self.session = session
+
+        self.downloaded_files = []
+        self.merge = True
+
+        if os.name == "nt":
+            yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
+        else:
+            yuu_folder = os.path.join('~', '.yuu_data')
+        if not os.path.isdir(yuu_folder):
+            os.mkdir(yuu_folder)
+        
+        self.temporary_folder = tempfile.mkdtemp(dir=yuu_folder)
+
+        self.Decryptor = None
+
+    
+    def setup_decryptor(self):
+        aes_ = AES.new(self.key, AES.MODE_CBC, IV=self.iv)
+        self.Decryptor = aes_
+
+
+    def decrypt_chunk(self, content):
+        if self.iv.startswith('0x'):
+            self.iv = self.iv[2:]
+        self.iv = unhexlify(self.iv)
+
+        return self.Decryptor.decrypt(content)
+
+
+    def download_chunk(self):
+        self.setup_decryptor() # Initialize Decryptor
+        try:
+            with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
+                for tsf in self.files:
+                    outputtemp = self.temporary_folder + '\\' + os.path.basename(tsf)
+                    with open(outputtemp, 'wb') as outf:
+                        try:
+                            vid = self.session.get(tsf)
+                            vid = self.decrypt_chunk(vid.content)
+                            outf.write(vid)
+                        except Exception as err:
+                            print('[ERROR] Problem occured\nreason: {}'.format(err))
+                            return None, self.temporary_folder
+                    pbar.update()
+                    self.downloaded_files.append(outputtemp)
+        except KeyboardInterrupt:
+            print('[WARN] User pressed CTRL+C, cleaning up...')
+            return None, self.temporary_folder
+        return self.downloaded_files, self.temporary_folder
+
 
 class AbemaTV:
     def __init__(self, session, verbose=False):
@@ -45,6 +111,8 @@ class AbemaTV:
         }
 
         self.authorization_required = False
+        self.authorized = True # Ignore for now
+        self.authorize = True # Ignore for now
 
         self._STRTABLE = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
         self._HKEY = b"3AF0298C219469522A313570E8583005A642E73EDD58E3EA2FB7339D3DF1597E"
@@ -68,6 +136,8 @@ class AbemaTV:
     def __repr__(self):
         return '<yuu.AbemaTV: Verbose={}, Resolution={}, Device ID={}, m3u8 URL={}>'.format(self.verbose, self.resolution, self.device_id, self.m3u8_url)
 
+    def get_downloader(self):
+        return AbemaTVDownloader # Return the class
 
     def get_token(self):
         def key_secret(devid):
@@ -365,4 +435,3 @@ class AbemaTV:
             ava_reso.append(temp_)
 
         return ava_reso
-
