@@ -5,8 +5,7 @@ import subprocess
 import click
 import requests
 
-from .common import __version__, isUserAdmin, get_parser
-from .downloader import download_chunk, merge_video
+from .common import __version__, isUserAdmin, get_parser, merge_video
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_options=True)
 
@@ -108,16 +107,16 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
     yuuParser = yuuParser(sesi, verbose)
 
     if yuuParser.authorization_required:
-        if args.username is None and args.password is None:
+        if username is None and password is None:
             print('[WARN] You need to be logged in to use download from this VOD')
             exit(1)
-        result, reason = yuuParser.authorize(args.username, args.password)
+        result, reason = yuuParser.authorize(username, password)
         if not result:
             print('[ERROR] {}: {}'.format(yuuParser.type, reason))
             exit(1)
     
-    if args.username and args.password and not yuuParser.authorized:
-        result, reason = yuuParser.authorize(args.username, args.password)
+    if username and password and not yuuParser.authorized:
+        result, reason = yuuParser.authorize(username, password)
         if not result:
             print('[ERROR] {}: {}'.format(yuuParser.type, reason))
             exit(1)
@@ -179,20 +178,28 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
     print('[INFO][DOWN] Output: {}'.format(output))
     print('[INFO][DOWN] Resolution: {}'.format(yuuParser.resolution))
     print('[INFO][DOWN] Estimated file size: {}'.format(yuuParser.est_filesize))
-    dl_list, temp_dir = download_chunk(files, video_key, iv, yuuParser.session)
-    if not dl_list:
-        if temp_dir:
-            shutil.rmtree(temp_dir)
-        exit(1)
+    
+    # Initialize Download Process
+    yuuDownloader = yuuParser.get_downloader()
+    yuuDownloader(files, video_key, iv, yuuParser.session)
+    if yuuDownloader.merge: # Workaround for Aniplus stream that provide direct .mp4
+        dl_list, temp_dir = yuuDownloader.download_chunk()
+        if not dl_list:
+            if temp_dir:
+                shutil.rmtree(temp_dir)
+            exit(1)
+    else:
+        yuuDownloader.download_chunk(output)
     print('[INFO][DOWN] Finished downloading')
     print('[INFO][DOWN] Merging video')
-    merge_video(dl_list, temp_dir)
-    shutil.rmtree(temp_dir)
+    if yuuDownloader.merge:
+        merge_video(dl_list, output)
+        shutil.rmtree(temp_dir)
     print('[INFO] Finished downloading: {}'.format(output))
     exit(0)
 
 
-def main():
+def main(): # For setup.py call
     cli()
 
 
