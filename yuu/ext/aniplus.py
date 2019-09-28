@@ -160,6 +160,8 @@ class Aniplus:
 
     def parse_m3u8(self):
         video_src = re.findall(r"<source type=\"video/mp4\"\s+[^>]*\bsrc\s*=.([\w:/.]*).*>", self.webpage_data, re.IGNORECASE | re.MULTILINE | re.DOTALL)
-        self.files_uri = video_src
-        return video_src, None, 'Success'
+        if not video_src:
+            return None, None, 'Failed to fetch video url'
+        self.files_uri = video_src[0]
+        return video_src[0], None, 'Success'
 
