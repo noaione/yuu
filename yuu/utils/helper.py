@@ -66,8 +66,8 @@ class toHex:
         """
         Convert a list to bytearray
         """
-        _bytes = [];
-        i = 0;
+        _bytes = []
+        i = 0
         while i < len(self.data):
             _bytes.append(int(self.data[i+2:i+4], 16))
             i += 2
