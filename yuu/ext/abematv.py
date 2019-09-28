@@ -136,8 +136,11 @@ class AbemaTV:
     def __repr__(self):
         return '<yuu.AbemaTV: Verbose={}, Resolution={}, Device ID={}, m3u8 URL={}>'.format(self.verbose, self.resolution, self.device_id, self.m3u8_url)
 
-    def get_downloader(self):
-        return AbemaTVDownloader # Return the class
+    def get_downloader(self, files, key, iv):
+        """
+        Return a :class: of the Downloader
+        """
+        return AbemaTVDownloader(files, key, iv, self.session)
 
     def get_token(self):
         def key_secret(devid):
@@ -207,10 +210,24 @@ class AbemaTV:
         return 'Success', 'Success'
 
 
-    def parse(self, url, resolution=None):
+    def parse(self, url, resolution=None, check_only=False):
         """
         Function to parse abema url
         """
+
+        res_list = [
+            '180p', '240p', '360p', '480p', '720p', '1080p', 'best', 'worst'
+        ]
+
+        if resolution not in res_list:
+            if not check_only:
+                return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
+
+        if resolution == 'best':
+            resolution = '1080p'
+        if resolution == 'worst':
+            resolution = '180p'
+
         if self.verbose:
             print('[DEBUG] Requesting data to Abema API')
         if '.m3u8' in url[-5:]:
