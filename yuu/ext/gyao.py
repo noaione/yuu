@@ -83,8 +83,11 @@ class GYAO:
     def __repr__(self):
         return '<yuu.GYAO: Verbose={}, Resolution={}, m3u8 URL={}>'.format(self.verbose, self.resolution, self.m3u8_url)
 
-    def get_downloader(self):
-        return GYAODownloader # Return the class
+    def get_downloader(self, files, key, iv):
+        """
+        Return a :class: of the Downloader
+        """
+        return GYAODownloader(files, key, iv, self.session)
 
     def get_token(self):
         headers = {'X-User-Agent': 'Unknown Pc GYAO!/2.0.0 Web'}
@@ -107,7 +110,7 @@ class GYAO:
         return 'SUCCESS', 'SUCCESS'
 
 
-    def parse(self, resolution=None):
+    def parse(self, resolution=None, check_only=False):
         """
         Function to parse gyao url
         """
@@ -120,7 +123,13 @@ class GYAO:
         ]
 
         if resolution not in res_list:
-            return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
+            if not check_only:
+                return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
+
+        if resolution == 'best':
+            resolution = '1080p-1'
+        if resolution == 'worst':
+            resolution = '240p-0'
 
         v_id = re.findall(r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|title[\w])/(?P<p1>[\w]*.*)', self.url)
         if not v_id:
