@@ -150,7 +150,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         print('[ERROR] {}: {}'.format(yuuParser.type, reason))
         exit(1)
 
-    if yuuParser.resolution != res:
+    if yuuParser.resolution != res and res not in ['best', 'worst']:
         print('[WARN] Resolution {} are not available'.format(res))
         print('[WARN] Switching to {}'.format(yuuParser.resolution))
         res = yuuParser.resolution
