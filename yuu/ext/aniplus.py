@@ -15,12 +15,11 @@ class AniplusDownloader:
 
         self.session.headers.update(
             {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36",
                 "Range": "bytes=0-",
                 "Sec-Fetch-Mode": "no-cors",
                 "Accept-Encoding": "identity;q=1, *;q=0"
             }
-        )
+        ) # Update once again just to make sure
 
 
     def download_chunk(self, output):
@@ -52,7 +51,8 @@ class Aniplus:
         # TODO: Fix naming scheme for all of my class
         self.webpage_data = None
         self.resolution = None
-        self.estimated_size = 'Unknown'
+        self.est_filesize = 'Unknown'
+        self.files_uri = None
 
         self.resolution_data = {
             "720p": ["~1000kb/s 25fps", "AAC 160kb/s 1ch"]
@@ -66,8 +66,11 @@ class Aniplus:
     def __repr__(self):
         return '<yuu.Aniplus: Verbose={}, Resolution={}, Authorized={}>'.format(self.verbose, self.resolution, self.authorized)
 
-    def get_downloader(self):
-        return AniplusDownloader
+    def get_downloader(self, files, key, iv):
+        """
+        Return a :class: of the Downloader
+        """
+        return AniplusDownloader(files, key, iv, self.session)
 
 
     def authorize(self, username, password):
@@ -95,16 +98,20 @@ class Aniplus:
         return ['720p', '1280x720']
 
 
-    def parse(self, url, resolution=None):
+    def parse(self, url, resolution=None, check_only=False):
         """
         Parse Aniplus data
         """
         if self.verbose:
             print('[DEBUG] Requesting data to Aniplus')
 
-        res_list = ['720p']
+        res_list = ['720p', 'best', 'worst']
         if resolution not in res_list:
-            return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
+            if not check_only:
+                return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
+
+        if resolution in ['best', 'worst']:
+            resolution = '720p'
 
         req = self.session.get(url)
         if self.verbose and req.status_code == 200:
@@ -127,7 +134,20 @@ class Aniplus:
     def get_video_key(self):
         """
         Return None since there's no key decryption in Aniplus
+        But use this to fetch the estimated size
         """
+        self.session.headers.update(
+            {
+                "Range": "bytes=0-",
+                "Sec-Fetch-Mode": "no-cors",
+                "Accept-Encoding": "identity;q=1, *;q=0"
+            }
+        )
+
+        with self.session.get(self.files_uri, stream=True) as r:
+            resp_head = r.headers
+            length = int(resp_head['Content-Length'])
+            self.est_filesize = round(length / 1024 / 1024)
         return None, 'No Encryption'
 
 
@@ -140,5 +160,6 @@ class Aniplus:
 
     def parse_m3u8(self):
         video_src = re.findall(r"<source type=\"video/mp4\"\s+[^>]*\bsrc\s*=.([\w:/.]*).*>", self.webpage_data, re.IGNORECASE | re.MULTILINE | re.DOTALL)
+        self.files_uri = video_src
         return video_src, None, 'Success'
 

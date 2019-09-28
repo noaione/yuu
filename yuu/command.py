@@ -54,7 +54,7 @@ def cli(version=False, update=False):
 @click.option("--username", "-U", required=False, default=None, help="Use username/password to download premium video")
 @click.option("--password", "-P", required=False, default=None, help="Use username/password to download premium video")
 @click.option("--proxy", "-p", required=False, default=None, metavar="<ip:port/url>", help="Use http(s)/socks5 proxies (please add `socks5://` if you use socks5)")
-@click.option("--resolution", "-r", "res", required=False, type=click.Choice(['180p', '240p', '360p', '480p', '720p', '1080p']), default="1080p", help="Resolution to be downloaded (Default: 1080p)")
+@click.option("--resolution", "-r", "res", required=False, default="best", help="Resolution to be downloaded (Default: best)")
 @click.option("--resolutions", "-R", "resR", is_flag=True, help="Show available resolutions")
 @click.option("--output", "-o", required=False, default=None, help="Output filename")
 @click.option('--verbose', '-v', is_flag=True, help="Enable verbosity")
@@ -180,9 +180,8 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
     print('[INFO][DOWN] Estimated file size: {}'.format(yuuParser.est_filesize))
     
     # Initialize Download Process
-    yuuDownloader = yuuParser.get_downloader()
-    yuuDownloader(files, video_key, iv, yuuParser.session)
-    if yuuDownloader.merge: # Workaround for Aniplus stream that provide direct .mp4
+    yuuDownloader = yuuParser.get_downloader(files, video_key, iv)
+    if yuuDownloader.merge: # Workaround for stream that don't use .m3u8
         dl_list, temp_dir = yuuDownloader.download_chunk()
         if not dl_list:
             if temp_dir:
@@ -190,9 +189,9 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
             exit(1)
     else:
         yuuDownloader.download_chunk(output)
-    print('[INFO][DOWN] Finished downloading')
-    print('[INFO][DOWN] Merging video')
     if yuuDownloader.merge:
+        print('[INFO][DOWN] Finished downloading')
+        print('[INFO][DOWN] Merging video')
         merge_video(dl_list, output)
         shutil.rmtree(temp_dir)
     print('[INFO] Finished downloading: {}'.format(output))
