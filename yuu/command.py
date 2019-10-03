@@ -83,6 +83,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
                 sesi.proxies = mode
                 sesi.get('http://httpbin.org/get') # Test website to check if proxy works or not
                 pmode = "+".join(mode.keys()).upper() + "/SOCKS5"
+                break
             except requests.exceptions.RequestException:
                 if verbose:
                     print('[DEBUG] Failed')
