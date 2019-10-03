@@ -52,13 +52,13 @@ class AbemaTVDownloader:
 
 
     def download_chunk(self):
-        self.setup_decryptor() # Initialize Decryptor
         try:
             with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
                 for tsf in self.files:
                     outputtemp = self.temporary_folder + '\\' + os.path.basename(tsf)
                     with open(outputtemp, 'wb') as outf:
                         try:
+                            self.setup_decryptor() # Initialize a new decryptor
                             vid = self.session.get(tsf)
                             vid = self._aes.decrypt(vid.content)
                             outf.write(vid)
@@ -310,7 +310,7 @@ class AbemaTV:
         for seg in x.segments:
             n += seg.duration
 
-        self.est_filesize = (round(n) * self.bitrate_calculation[self.resolution]) / 1024 / 10
+        self.est_filesize = round((round(n) * self.bitrate_calculation[self.resolution]) / 1024 / 10, 2)
         self.ticket = ticket
 
         files_ = []

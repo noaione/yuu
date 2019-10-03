@@ -133,7 +133,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         print('[INFO] {}: Checking available resolution'.format(yuuParser.type))
         avares = yuuParser.resolutions()
         print('[INFO] {}: Available resolution:'.format(yuuParser.type))
-        print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("", "Resolution", "Video Quality", "Audio Quality", width=16))
+        print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
         for res in avares:
             r_c, wxh = res
             vidq, audq = yuuParser.resolution_data[r_c]
@@ -168,7 +168,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
     print('[INFO][DOWN] Starting downloader...')
     print('[INFO][DOWN] Output: {}'.format(output))
     print('[INFO][DOWN] Resolution: {}'.format(yuuParser.resolution))
-    print('[INFO][DOWN] Estimated file size: {}'.format(yuuParser.est_filesize))
+    print('[INFO][DOWN] Estimated file size: {} MiB'.format(yuuParser.est_filesize))
 
     # Initialize Download Process
     yuuDownloader = yuuParser.get_downloader(files, video_key, iv)
