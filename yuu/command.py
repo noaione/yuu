@@ -78,7 +78,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
             for mode in proxy_test:
                 try:
                     if verbose:
-                        print('Testing {x} mode proxy'.format(x="+".join(mode.keys())))
+                        print('[DEBUG] Testing {x} mode proxy'.format(x="+".join(mode.keys())))
                     sesi.proxies = mode
                     sesi.get('http://httpbin.org/get') # Test website to check if proxy works or not
                     pmode = "+".join(mode.keys()).upper() + "/SOCKS5"
@@ -125,7 +125,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         exit(1)
 
     print('[INFO] {}: Parsing url'.format(yuuParser.type))
-    output_name, reason = yuuParser.parse(input, res)
+    output_name, reason = yuuParser.parse(res, resR)
     if not output_name:
         print('[ERROR] {}: {}'.format(yuuParser.type, reason))
         exit(1)

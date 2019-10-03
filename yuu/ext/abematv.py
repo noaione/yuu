@@ -240,10 +240,10 @@ class AbemaTV:
 
             jsdata = req.json()
             output_name = jsdata['slot']['title']
-            if 'chasePlayback' in jsdata['slot']: # just in case
-                hls = jsdata['slot']['chasePlayback']['hls']
-            else:
+            if 'playback' in jsdata['slot']:
                 hls = jsdata['slot']['playback']['hls']
+            else:
+                hls = jsdata['slot']['chasePlayback']['hls']  # Compat
 
             m3u8_url = '{x}/{r}/playlist.m3u8'.format(x=hls[:hls.rfind('/')], r=resolution[:-1])
             if self.is_m3u8:
