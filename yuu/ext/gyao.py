@@ -242,8 +242,8 @@ class GYAO:
             temp_ = []
             res = r_p.stream_info.resolution
             aud_d = r_p.stream_info.audio.strip('audio')
-            r_c = '{h}p{a}'.format(res[1], aud_d)
-            res_name = '{w}x{h}'.format(res[0], res[1])
+            r_c = '{h}p{a}'.format(h=res[1], a=aud_d)
+            res_name = '{w}x{h}'.format(w=res[0], h=res[1])
 
             temp_.append(r_c)
             temp_.append(res_name)
