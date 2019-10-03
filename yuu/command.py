@@ -101,7 +101,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         print('[ERROR] Unknown url format')
         exit(1)
 
-    yuuParser = yuuParser(sesi, verbose)
+    yuuParser = yuuParser(input, sesi, verbose)
 
     if yuuParser.authorization_required:
         if username is None and password is None:
