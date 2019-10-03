@@ -80,11 +80,12 @@ class AbemaTVDownloader:
 
 
 class AbemaTV:
-    def __init__(self, session, verbose=False):
+    def __init__(self, url, session, verbose=False):
         self.session = session
         self.verbose = verbose
         self.type = 'AbemaTV'
 
+        self.url = url
         self.m3u8_url = None
         self.resolution = None
         self.ticket = None
@@ -210,7 +211,7 @@ class AbemaTV:
         return 'Success', 'Success'
 
 
-    def parse(self, url, resolution=None, check_only=False):
+    def parse(self, resolution=None, check_only=False):
         """
         Function to parse abema url
         """
@@ -230,14 +231,14 @@ class AbemaTV:
 
         if self.verbose:
             print('[DEBUG] Requesting data to Abema API')
-        if '.m3u8' in url[-5:]:
+        if '.m3u8' in self.url[-5:]:
             reg = re.compile(r'(program|slot)\/[\w+-]+')
-            url = re.search(reg, m3u8)[0]
+            self.url = re.search(reg, m3u8)[0]
             self.is_m3u8 = True
 
-        ep_link = url[url.rfind('/')+1:]
+        ep_link = self.url[self.url.rfind('/')+1:]
 
-        if is_channel(url):
+        if is_channel(self.url):
             req = self.session.get(self._CHANNELAPI + ep_link)
             if self.verbose and req.status_code == 200:
                 print('[DEBUG] Data requested')
@@ -252,7 +253,7 @@ class AbemaTV:
 
             m3u8_url = '{x}/{r}/playlist.m3u8'.format(x=hls[:hls.rfind('/')], r=resolution[:-1])
             if self.is_m3u8:
-                m3u8_url = url
+                m3u8_url = self.url
 
             if self.verbose:
                 print('[DEBUG] M3U8 Link: {}'.format(m3u8_url))
@@ -270,7 +271,7 @@ class AbemaTV:
 
             m3u8_url = '{x}/{r}/playlist.m3u8'.format(x=hls[:hls.rfind('/')], r=resolution[:-1])
             if self.is_m3u8:
-                m3u8_url = url
+                m3u8_url = self.url
 
             if self.verbose:
                 print('[DEBUG] M3U8 Link: {}'.format(m3u8_url))
@@ -452,3 +453,13 @@ class AbemaTV:
             ava_reso.append(temp_)
 
         return ava_reso
+
+    def check_output(self, output=None, output_name=None):
+        if output:
+            fn_, ext_ = os.path.splitext(output)
+            if ext_ != 'ts':
+                output = fn_ + '.ts'
+        else:
+            output = '{x} ({m} {r}).ts'.format(x=output_name, m=self.type, r=self.resolution)
+
+        return output
