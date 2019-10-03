@@ -159,11 +159,10 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         output = output.replace(char, '_')
 
     print('[INFO] {}: Fetching video key'.format(yuuParser.type))
-    video_key, reason = yuuParser.get_video_key() #fetch_video_key(ticket, authtoken, sesi, verbose)
+    video_key, reason = yuuParser.get_video_key()
     if not video_key:
-        if reason != 'No Encryption': # If the returned reason are 'No Encryption' it will bypass.
-            print('[ERROR] {}: {}'.format(yuuParser.type, reason))
-            exit(1)
+        print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+        exit(1)
 
     print('[INFO][DOWN] Starting downloader...')
     print('[INFO][DOWN] Output: {}'.format(output))
