@@ -20,7 +20,7 @@ class GYAODownloader:
         if os.name == "nt":
             yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
         else:
-            yuu_folder = os.path.join('~', '.yuu_data')
+            yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
         if not os.path.isdir(yuu_folder):
             os.mkdir(yuu_folder)
         
@@ -51,6 +51,7 @@ class GYAO:
     def __init__(self, url, session, verbose=False):
         self.session = session
         self.verbose = verbose
+        self.type = 'GYAO'
 
         self.url = url
         self.m3u8_url = None
@@ -102,7 +103,7 @@ class GYAO:
 
         r_pk = self.session.get("http://players.brightcove.net/{}/default_default/index.html".format(data_account[0]))
 
-        pkey = re.findall(r'policyKey\s*:\s*(["\'])(?P<pk>.+?)\1', r_pk.text)[1]
+        pkey = re.findall(r'policyKey\s*:\s*(["\'])(?P<pk>.+?)\1', r_pk.text)[0][1]
 
         self.account = data_account[0]
         self.policy_key = pkey
@@ -255,3 +256,14 @@ class GYAO:
         Return None since there's not key decryption in GYAO
         """
         return None, 'No Encryption'
+
+
+    def check_output(self, output=None, output_name=None):
+        if output:
+            fn_, ext_ = os.path.splitext(output)
+            if ext_ != 'ts':
+                output = fn_ + '.ts'
+        else:
+            output = '{x} ({m} {r}).ts'.format(x=output_name, m=self.type, r=self.resolution[:-2])
+
+        return output

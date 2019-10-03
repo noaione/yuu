@@ -43,12 +43,13 @@ class AniplusDownloader:
 
 
 class Aniplus:
-    def __init__(self, session, verbose=False):
+    def __init__(self, url, session, verbose=False):
         self.session = session
         self.verbose = verbose
         self.type = 'Aniplus'
 
         # TODO: Fix naming scheme for all of my class
+        self.url = url
         self.webpage_data = None
         self.resolution = None
         self.est_filesize = 'Unknown'
@@ -98,7 +99,7 @@ class Aniplus:
         return ['720p', '1280x720']
 
 
-    def parse(self, url, resolution=None, check_only=False):
+    def parse(self, resolution=None, check_only=False):
         """
         Parse Aniplus data
         """
@@ -113,7 +114,7 @@ class Aniplus:
         if resolution in ['best', 'worst']:
             resolution = '720p'
 
-        req = self.session.get(url)
+        req = self.session.get(self.url)
         if self.verbose and req.status_code == 200:
             print('[DEBUG] Data requested')
             print('[DEBUG] Parsing webpage result')
@@ -126,7 +127,7 @@ class Aniplus:
 
         self.webpage_data = req.text
         self.resolution = resolution
-        self.session.headers.update({'Referer': url})
+        self.session.headers.update({'Referer': self.url})
 
         return outputname, 'Success'
 
@@ -165,3 +166,13 @@ class Aniplus:
         self.files_uri = video_src[0]
         return video_src[0], None, 'Success'
 
+
+    def check_output(self, output=None, output_name=None):
+        if output:
+            fn_, ext_ = os.path.splitext(output)
+            if ext_ != 'mp4':
+                output = fn_ + '.mp4'
+        else:
+            output = '{x} ({m} {r}).mp4'.format(x=output_name, m=self.type, r=self.resolution)
+
+        return output
