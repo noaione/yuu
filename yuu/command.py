@@ -20,33 +20,24 @@ def cli(version=False, update=False):
         print('yuu rewrite v{} - Created by NoAiOne'.format(__version__))
         exit(0)
     if update:
+        import sys
         print('[INFO] Updating yuu...'.format(ver=__version__))
         upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
         upstream_version = upstream_data['version']
-        upstream_change = upstream_data['changelog']
+        #upstream_change = upstream_data['changelog']
         if upstream_version == __version__:
             print('[INFO] Already on the newest version.')
             exit(0)
         print('[INFO] Updating to yuu version {} (Current: v{})'.format(upstream_version, __version__))
 
-        try:
-            if isUserAdmin():
-                if os.name != "nt":
-                    print('[WARN] Run this command to update yuu: `pip3 install -U yuu=={}`'.format(upstream_version))
-                    exit(1)
-                from win32com.shell.shell import ShellExecuteEx
-                ShellExecuteEx(lpVerb='runas', lpFile='pip', lpParameters='install -U yuu=={}'.format(upstream_version))
-            else:
-                print('[WARN] Run this command to update yuu: `pip install -U yuu=={}`'.format(upstream_version))
-                exit(1)
-        except:
-            print('[ERROR] Updater returned non-zero exit code')
-            print('Try to run `pip install -U yuu={}` manually'.format(upstream_version))
+        if getattr(sys, "frozen", False):
+            # It's from executable
+            print('[INFO] There\'s currently no executeable release for yuu')
+            exit(0)
+        else:
+            # It's from pip
+            print('[WARN] To update yuu currently, use normal `pip install -U yuu=={}` command'.format(upstream_version))
             exit(1)
-        print('\n=== yuu version {} changelog ==='.format(upstream_version))
-        print(upstream_change+'\n')
-        print('[INFO] Updated.')
-        exit(0)
 
 
 @cli.command("download", short_help="Download video from abema.tv or gyao")
@@ -69,40 +60,45 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
     #    exit(0)
 
     sesi = requests.Session()
-    if proxy:
-        print('[INFO] Testing proxy')
-        proxy_test = [
-            {'http': proxy, 'https': proxy},
-            {'https': proxy},
-            {'http': proxy}
-        ]
-        for mode in proxy_test:
-            try:
-                if verbose:
-                    print('Testing {x} mode proxy'.format(x="+".join(mode.keys())))
-                sesi.proxies = mode
-                sesi.get('http://httpbin.org/get') # Test website to check if proxy works or not
-                pmode = "+".join(mode.keys()).upper() + "/SOCKS5"
-                break
-            except requests.exceptions.RequestException:
-                if verbose:
-                    print('[DEBUG] Failed')
-                if mode == proxy_test[-1]:
-                    print('[ERROR] Cannot connect to proxy (Request timeout)')
-                    exit(1)
     try:
         sesi.get('http://httpbin.org/get')
         pmode = "No proxy"
     except:
         print('[ERROR] No connection available to make requests')
         exit(1)
+
+    if proxy:
+        print('[INFO] Testing proxy')
+        try:
+            proxy_test = [
+                {'http': proxy, 'https': proxy},
+                {'https': proxy},
+                {'http': proxy}
+            ]
+            for mode in proxy_test:
+                try:
+                    if verbose:
+                        print('Testing {x} mode proxy'.format(x="+".join(mode.keys())))
+                    sesi.proxies = mode
+                    sesi.get('http://httpbin.org/get') # Test website to check if proxy works or not
+                    pmode = "+".join(mode.keys()).upper() + "/SOCKS5"
+                    break
+                except requests.exceptions.RequestException:
+                    if verbose:
+                        print('[DEBUG] Failed')
+                    if mode == proxy_test[-1]:
+                        print('[ERROR] Cannot connect to proxy (Request timeout)')
+                        exit(1)
+        except KeyboardInterrupt:
+            print('[WARN] Interrupted')
+            exit(0)
     if verbose:
         print('[DEBUG] Using proxy mode: {}'.format(pmode))
 
     yuuParser = get_parser(input)
 
     if not yuuParser:
-        print('[ERROR] Unknown url')
+        print('[ERROR] Unknown url format')
         exit(1)
 
     yuuParser = yuuParser(sesi, verbose)
@@ -156,13 +152,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         print('[WARN] Switching to {}'.format(yuuParser.resolution))
         res = yuuParser.resolution
 
-    if output:
-        if output[-3:] == '.ts':
-            output = output
-        else:
-            output = output + '.ts'
-    else:
-        output = '{x} ({m} {r}).ts'.format(x=output_name, m=yuuParser.type, r=yuuParser.resolution)
+    output = yuuParser.check_output(output, output_name)
 
     illegalchar = ['/', '<', '>', ':', '"', '\\', '|', '?', '*'] # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
     for char in illegalchar:
@@ -197,10 +187,6 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         shutil.rmtree(temp_dir)
     print('[INFO] Finished downloading: {}'.format(output))
     exit(0)
-
-
-def main(): # For setup.py call
-    cli()
 
 
 if __name__=='__main__':
