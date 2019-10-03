@@ -1,14 +1,7 @@
 # (koito) yuu 
-A simple AbemaTV and other video downloader in python
+A simple AbemaTV and other we(e)bsite video downloader in python
 
-## THIS IS A REWRITE VERISON
-Current deployed version are at [master branch](https://github.com/noaione/yuu/tree/master)
-To install this version: `pip install git+https://github.com/noaione/yuu.git@rewrite`
-
-This version will add more website.
-Currently need help:
-- bilibili (Probably I will do it myself.)
-- Ponimu (Need help figuring out some encryption [Read Here for more info.](https://github.com/noaione/yuu/blob/rewrite/yuu/ext/ponimu.py))
+Old version/legacy mode: [legacy branch](https://github.com/noaione/yuu/tree/legacy)
 
 [![koito yuu](https://p.n4o.xyz/i/fzpt7mt.jpg)](https://anilist.co/character/123528/Yuu-Koito)
 
@@ -21,6 +14,11 @@ Currently need help:
 - m3u8
 - tqdm
 - Japan connection/proxy/vpn
+
+## Supported web
+- AbemaTV
+- Aniplus Asia
+- GYAO!
 
 ## Installation
 `pip install yuu`
@@ -40,25 +38,31 @@ Options:
   -h, --help     Show this message and exit.
 
 Commands:
-  download  Download video from abema.tv
+  download  Download a video from yuu Supported we(e)bsite
+  streams   Check supported website
 
 ///////////////////////////////////////////////////
 >> yuu download -h
-Usage: yuu download [OPTIONS] <AbemaTV url site or m3u8>
+Usage: yuu download [OPTIONS] <URL site>
 
-  Download a free video from abema
+  Main command to access downloader
+
+  Check supported streams for yuu: `yuu streams`
 
 Options:
-  -p, --proxy <ip:port/url>       Use http(s)/socks5 proxies (please add
-                                  `socks5://` if you use socks5)
-  -r, --resolution [180p|240p|360p|480p|720p|1080p]
-                                  Resolution to be downloaded (Default: 1080p)
-  -R, --resolutions               Show available resolutions
-  -o, --output TEXT               Output filename
-  -v, --verbose                   Enable verbosity
-  -h, --help                      Show this message and exit.
+  -U, --username TEXT        Use username/password to download premium video
+  -P, --password TEXT        Use username/password to download premium video
+  -p, --proxy <ip:port/url>  Use http(s)/socks5 proxies (please add
+                             `socks5://` if you use socks5)
+  -r, --resolution TEXT      Resolution to be downloaded (Default: best)
+  -R, --resolutions          Show available resolutions
+  -o, --output TEXT          Output filename
+  -v, --verbose              Enable verbosity
+  -h, --help                 Show this message and exit.
 ```
 
+- **`--username/-U`**: Use yuu with registered username/password
+- **`--password/-P`**: Use yuu with registered username/password
 - **`--proxies/-p`**: Download using proxy for people outside Japan
     - Example: `127.0.0.1:1080`, `http://127.0.0.1:1080`, `http://user:pass@127.0.0.1:1080`, `socks5://127.0.0.1:1080`
 - **`--resolution/-r`**: Target resolution

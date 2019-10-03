@@ -40,7 +40,22 @@ def cli(version=False, update=False):
             exit(1)
 
 
-@cli.command("download", short_help="Download video from abema.tv or gyao")
+@cli.command("streams", short_help="Check supported website")
+def streams_list():
+    supported = {
+        "AbemaTV": ["No", "No", "Yes (JP)"],
+        "Aniplus Asia": ["Yes", "No", "Yes (SEA)"],
+        "GYAO!": ["No", "No", "Yes (JP)"]
+    }
+
+    print('[INFO] Supported website')
+    print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Website", "Need Login?", "Premium Download?", "Proxy Needed?", width=18))
+    for k, v_ in supported.items():
+        log_, premi_, proxy_ = v_
+        print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + k, log_, premi_, proxy_, width=18))
+
+
+@cli.command("download", short_help="Download a video from yuu Supported we(e)bsite")
 @click.argument("input", metavar="<URL site>")
 @click.option("--username", "-U", required=False, default=None, help="Use username/password to download premium video")
 @click.option("--password", "-P", required=False, default=None, help="Use username/password to download premium video")
@@ -50,14 +65,18 @@ def cli(version=False, update=False):
 @click.option("--output", "-o", required=False, default=None, help="Output filename")
 @click.option('--verbose', '-v', is_flag=True, help="Enable verbosity")
 def main_downloader(input, username, password, proxy, res, resR, output, verbose):
-    """Main command to access downloader"""
+    """
+    Main command to access downloader
+    
+    Check supported streams for yuu: `yuu streams`
+    """
     print('[INFO] Starting yuu rewrite v{ver}...'.format(ver=__version__))
 
-    #upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
-    #upstream_version = upstream_data['version']
-    #if upstream_version != __version__:
-    #    print('[INFO] There\'s new version available to download, please update using `yuu -U`.')
-    #    exit(0)
+    upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
+    upstream_version = upstream_data['version']
+    if upstream_version != __version__:
+        print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
+        exit(0)
 
     sesi = requests.Session()
     try:
