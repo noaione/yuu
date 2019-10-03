@@ -35,7 +35,7 @@ class GYAODownloader:
                     with open(outputtemp, 'wb') as outf:
                         try:
                             vid = self.session.get(tsf)
-                            outf.write(vid)
+                            outf.write(vid.content)
                         except Exception as err:
                             print('[ERROR] Problem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
@@ -120,7 +120,8 @@ class GYAO:
 
         res_list = [
             '240p-0', '360p-0', '480p-0', '720p-0', '1080p-0',
-            '240p-1', '360p-1', '480p-1', '720p-1', '1080p-1'
+            '240p-1', '360p-1', '480p-1', '720p-1', '1080p-1',
+            'best', 'worst'
         ]
 
         if resolution not in res_list:
@@ -128,9 +129,9 @@ class GYAO:
                 return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
 
         if resolution == 'best':
-            resolution = '1080p-1'
+            resolution = '1080p-0'
         if resolution == 'worst':
-            resolution = '240p-0'
+            resolution = '240p-1'
 
         v_id = re.findall(r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|title[\w])/(?P<p1>[\w]*.*)', self.url)
         if not v_id:
@@ -188,17 +189,16 @@ class GYAO:
 
         band_list_v4 = []
         for v4 in r_all.playlists:
-            temp_ = []
             s_info = v4.stream_info
             audio_inf = s_info.audio.strip('audio')
             if resolution[-2:] == audio_inf:
-                temp_.append(s_info.bandwidth)
+                band_list_v4.append(s_info.bandwidth)
 
         for v3 in r2_all.playlists:
             bw = v3.stream_info.bandwidth
             for bwv4 in band_list_v4:
                 if bw == bwv4:
-                    self.m3u8_url = v3.url
+                    self.m3u8_url = v3.uri
                     self.resolution = resolution
 
         if not self.m3u8_url:
