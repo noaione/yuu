@@ -17,7 +17,7 @@ def cli(version=False, update=False):
     A simple AbemaTV video downloader
     """
     if version:
-        print('yuu rewrite v{} - Created by NoAiOne'.format(__version__))
+        print('yuu v{} - Created by NoAiOne'.format(__version__))
         exit(0)
     if update:
         import sys
@@ -70,7 +70,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
     
     Check supported streams for yuu: `yuu streams`
     """
-    print('[INFO] Starting yuu rewrite v{ver}...'.format(ver=__version__))
+    print('[INFO] Starting yuu v{ver}...'.format(ver=__version__))
 
     upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
     upstream_version = upstream_data['version']
