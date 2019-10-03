@@ -118,7 +118,7 @@ class Aniplus:
         if self.verbose and req.status_code == 200:
             print('[DEBUG] Data requested')
             print('[DEBUG] Parsing webpage result')
-        
+
         test_region = re.findall(r"error\-region", req.text)
         if test_region:
             None, 'Video are geo-locked. Checkout more at: https://www.aniplus-asia.com/error-region/'
@@ -131,7 +131,7 @@ class Aniplus:
 
         return outputname, 'Success'
 
-    
+
     def get_video_key(self):
         """
         Return None since there's no key decryption in Aniplus

@@ -111,7 +111,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         if not result:
             print('[ERROR] {}: {}'.format(yuuParser.type, reason))
             exit(1)
-    
+
     if username and password and not yuuParser.authorized:
         result, reason = yuuParser.authorize(username, password)
         if not result:
@@ -169,7 +169,7 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
     print('[INFO][DOWN] Output: {}'.format(output))
     print('[INFO][DOWN] Resolution: {}'.format(yuuParser.resolution))
     print('[INFO][DOWN] Estimated file size: {}'.format(yuuParser.est_filesize))
-    
+
     # Initialize Download Process
     yuuDownloader = yuuParser.get_downloader(files, video_key, iv)
     if yuuDownloader.merge: # Workaround for stream that don't use .m3u8
