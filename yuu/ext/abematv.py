@@ -35,26 +35,20 @@ class AbemaTVDownloader:
         if os.name == "nt":
             yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
         else:
-            yuu_folder = os.path.join('~', '.yuu_data')
+            yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
         if not os.path.isdir(yuu_folder):
             os.mkdir(yuu_folder)
         
         self.temporary_folder = tempfile.mkdtemp(dir=yuu_folder)
 
-        self.Decryptor = None
+        self._aes = None
 
     
     def setup_decryptor(self):
-        aes_ = AES.new(self.key, AES.MODE_CBC, IV=self.iv)
-        self.Decryptor = aes_
-
-
-    def decrypt_chunk(self, content):
         if self.iv.startswith('0x'):
             self.iv = self.iv[2:]
         self.iv = unhexlify(self.iv)
-
-        return self.Decryptor.decrypt(content)
+        self._aes = AES.new(self.key, AES.MODE_CBC, IV=self.iv)
 
 
     def download_chunk(self):
@@ -66,7 +60,7 @@ class AbemaTVDownloader:
                     with open(outputtemp, 'wb') as outf:
                         try:
                             vid = self.session.get(tsf)
-                            vid = self.decrypt_chunk(vid.content)
+                            vid = self._aes.decrypt(vid.content)
                             outf.write(vid)
                         except Exception as err:
                             print('[ERROR] Problem occured\nreason: {}'.format(err))
