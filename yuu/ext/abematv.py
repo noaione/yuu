@@ -38,12 +38,12 @@ class AbemaTVDownloader:
             yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
         if not os.path.isdir(yuu_folder):
             os.mkdir(yuu_folder)
-        
+
         self.temporary_folder = tempfile.mkdtemp(dir=yuu_folder)
 
         self._aes = None
 
-    
+
     def setup_decryptor(self):
         if self.iv.startswith('0x'):
             self.iv = self.iv[2:]
@@ -274,7 +274,7 @@ class AbemaTV:
 
         self.resolution = resolution
         self.m3u8_url = m3u8_url
-        
+
         return output_name, 'Success'
 
 

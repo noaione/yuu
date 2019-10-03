@@ -23,7 +23,7 @@ class GYAODownloader:
             yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
         if not os.path.isdir(yuu_folder):
             os.mkdir(yuu_folder)
-        
+
         self.temporary_folder = tempfile.mkdtemp(dir=yuu_folder)
 
 
@@ -96,7 +96,7 @@ class GYAO:
         v_id = re.findall(r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|title[\w])/(?P<p1>[\w]*.*)', self.url)
         if not v_id:
             return None, 'Video URL are not valid'
-       
+
         r_vid = self.session.get('https://gyao.yahoo.co.jp/dam/v1/videos/' + v_id[0].replace('/', ':').rstrip(':') + query, headers=headers)
         r_cov = self.session.get("http://players.brightcove.net/4235717419001/default_default/index.html?videoId=" + r_vid.json()['videoId'])
         data_account = re.findall(r'<video-js\s+[^>]*\bdata-account\s*=.([\d]*).*>', r_cov.text, re.IGNORECASE | re.DOTALL | re.VERBOSE)
@@ -156,7 +156,7 @@ class GYAO:
         if req_bc.status_code == 403:
             error_reason = req_bc[0]['error_subcode']
             return None, error_bc[error_reason]
-        
+
         if self.verbose and req_bc.status_code == 200:
             print('[DEBUG] Data requested')
             print('[DEBUG] Parsing json API')
@@ -202,7 +202,7 @@ class GYAO:
                     self.resolution = resolution
 
         if not self.m3u8_url:
-            return None, 'Resolution {} are not exist in this video.'
+            return None, 'Resolution {} are not exist in this video.'.format(self.resolution)
 
         return output_name, None, 'Success Parsing GYAO URL.'
 
@@ -250,7 +250,7 @@ class GYAO:
 
         return ava_reso
 
-    
+
     def get_video_key(self):
         """
         Return None since there's not key decryption in GYAO
