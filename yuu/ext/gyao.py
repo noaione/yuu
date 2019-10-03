@@ -60,7 +60,7 @@ class GYAO:
         self.account = None
         self.m3u8_url_list = None
         self.is_m3u8 = False
-        self.est_filesize = None
+        self.est_filesize = None # In MiB
 
         self.resolution_data = {
             "1080p-0": ["~5000kb/s", "AAC 64kb/s 2ch"],
@@ -201,7 +201,7 @@ class GYAO:
                 if bw == bwv4:
                     self.m3u8_url = v3.uri
                     self.resolution = resolution
-                    self.est_filesize = round(bw / 1024 / 1024, 2)
+                    self.est_filesize = round(bw / 1024 / 5, 2)
 
         if not self.m3u8_url:
             return None, 'Resolution {} are not exist in this video.'.format(self.resolution)

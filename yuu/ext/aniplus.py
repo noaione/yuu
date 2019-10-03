@@ -52,7 +52,7 @@ class Aniplus:
         self.url = url
         self.webpage_data = None
         self.resolution = None
-        self.est_filesize = 'Unknown'
+        self.est_filesize = None # In MiB
         self.files_uri = None
 
         self.resolution_data = {
