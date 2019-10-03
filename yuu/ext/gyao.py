@@ -98,7 +98,7 @@ class GYAO:
             return None, 'Video URL are not valid'
        
         r_vid = self.session.get('https://gyao.yahoo.co.jp/dam/v1/videos/' + v_id[0].replace('/', ':').rstrip(':') + query, headers=headers)
-        r_cov = self.session.get("http://players.brightcove.net/4235717419001/default_default/index.html?videoId=" + r_vid['videoId'])
+        r_cov = self.session.get("http://players.brightcove.net/4235717419001/default_default/index.html?videoId=" + r_vid.json()['videoId'])
         data_account = re.findall(r'<video-js\s+[^>]*\bdata-account\s*=.([\d]*).*>', r_cov.text, re.IGNORECASE | re.DOTALL | re.VERBOSE)
 
         r_pk = self.session.get("http://players.brightcove.net/{}/default_default/index.html".format(data_account[0]))
