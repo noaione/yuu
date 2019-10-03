@@ -36,6 +36,6 @@ setuptools.setup(
         'Programming Language :: Python :: 3.7'
     ],
     entry_points = {
-        'console_scripts': ['yuu=yuu.command:main']
+        'console_scripts': ['yuu=yuu.command:cli']
     }
 )
