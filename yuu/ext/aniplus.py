@@ -148,7 +148,7 @@ class Aniplus:
         with self.session.get(self.files_uri, stream=True) as r:
             resp_head = r.headers
             length = int(resp_head['Content-Length'])
-            self.est_filesize = round(length / 1024 / 1024)
+            self.est_filesize = round(length / 1024 / 1024, 2)
         return None, 'No Encryption'
 
 
