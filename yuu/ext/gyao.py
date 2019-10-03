@@ -206,7 +206,7 @@ class GYAO:
         if not self.m3u8_url:
             return None, 'Resolution {} are not exist in this video.'.format(self.resolution)
 
-        return output_name, None, 'Success Parsing GYAO URL.'
+        return output_name, None
 
 
     def parse_m3u8(self):
@@ -255,9 +255,9 @@ class GYAO:
 
     def get_video_key(self):
         """
-        Return None since there's not key decryption in GYAO
+        Return True since there's not key decryption in GYAO
         """
-        return None, 'No Encryption'
+        return True, None
 
 
     def check_output(self, output=None, output_name=None):
