@@ -134,7 +134,7 @@ class Aniplus:
 
     def get_video_key(self):
         """
-        Return None since there's no key decryption in Aniplus
+        Return True since there's no key decryption in Aniplus
         But use this to fetch the estimated size
         """
         self.session.headers.update(
@@ -149,7 +149,7 @@ class Aniplus:
             resp_head = r.headers
             length = int(resp_head['Content-Length'])
             self.est_filesize = round(length / 1024 / 1024, 2)
-        return None, 'No Encryption'
+        return True, None
 
 
     def get_token(self):
