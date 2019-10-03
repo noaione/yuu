@@ -87,7 +87,7 @@ class AbemaTV:
         self.ticket = None
         self.device_id = None
         self.is_m3u8 = False
-        self.est_filesize = None
+        self.est_filesize = None # In MiB
 
         self.resolution_data = {
             "1080p": ["4000kb/s", "AAC 192kb/s 2ch"],
@@ -312,7 +312,7 @@ class AbemaTV:
         for seg in x.segments:
             n += seg.duration
 
-        self.est_filesize = round((round(n) * self.bitrate_calculation[self.resolution]) / 1024 / 10, 2)
+        self.est_filesize = round((round(n) * self.bitrate_calculation[self.resolution]) / 1024 / 6, 2)
         self.ticket = ticket
 
         return files, iv[2:], 'Success'
