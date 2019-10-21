@@ -5,7 +5,7 @@ import subprocess
 import click
 import requests
 
-from .common import __version__, isUserAdmin, get_parser, merge_video
+from .common import __version__, get_parser, merge_video, mux_video
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_options=True)
 
@@ -19,25 +19,6 @@ def cli(version=False, update=False):
     if version:
         print('yuu v{} - Created by NoAiOne'.format(__version__))
         exit(0)
-    if update:
-        import sys
-        print('[INFO] Updating yuu...'.format(ver=__version__))
-        upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
-        upstream_version = upstream_data['version']
-        #upstream_change = upstream_data['changelog']
-        if upstream_version == __version__:
-            print('[INFO] Already on the newest version.')
-            exit(0)
-        print('[INFO] Updating to yuu version {} (Current: v{})'.format(upstream_version, __version__))
-
-        if getattr(sys, "frozen", False):
-            # It's from executable
-            print('[INFO] There\'s currently no executeable release for yuu')
-            exit(0)
-        else:
-            # It's from pip
-            print('[WARN] To update yuu currently, use normal `pip install -U yuu=={}` command'.format(upstream_version))
-            exit(1)
 
 
 @cli.command("streams", short_help="Check supported website")
@@ -62,9 +43,11 @@ def streams_list():
 @click.option("--proxy", "-p", required=False, default=None, metavar="<ip:port/url>", help="Use http(s)/socks5 proxies (please add `socks5://` if you use socks5)")
 @click.option("--resolution", "-r", "res", required=False, default="best", help="Resolution to be downloaded (Default: best)")
 @click.option("--resolutions", "-R", "resR", is_flag=True, help="Show available resolutions")
+@click.option("--mux", is_flag=True, help="Mux .ts to .mkv (Need ffmpeg or mkvmerge)")
+@click.option("--keep-temp-files", "-keep", "keep_", is_flag=True, help="Keep downloaded fragment and combined fragment (If muxing) (Default: no)")
 @click.option("--output", "-o", required=False, default=None, help="Output filename")
 @click.option('--verbose', '-v', is_flag=True, help="Enable verbosity")
-def main_downloader(input, username, password, proxy, res, resR, output, verbose):
+def main_downloader(input, username, password, proxy, res, resR, mux, keep_, output, verbose):
     """
     Main command to access downloader
     
@@ -72,11 +55,16 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
     """
     print('[INFO] Starting yuu v{ver}...'.format(ver=__version__))
 
-    upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
-    upstream_version = upstream_data['version']
-    if upstream_version != __version__:
-        print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
-        exit(0)
+    try:
+        upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
+        upstream_version = upstream_data['version']
+        if upstream_version != __version__:
+            print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
+            print('====== Changelog v{} ======'.format(upstream_version))
+            print(upstream_data['changelog'])
+            exit(0)
+    except:
+        print('[WARN] Failed checking for new update, skipping...')
 
     sesi = requests.Session()
     try:
@@ -202,7 +190,17 @@ def main_downloader(input, username, password, proxy, res, resR, output, verbose
         print('[INFO][DOWN] Finished downloading')
         print('[INFO][DOWN] Merging video')
         merge_video(dl_list, output)
-        shutil.rmtree(temp_dir)
+        if not keep_:
+            shutil.rmtree(temp_dir)
+    if mux:
+        if os.path.isfile(output):
+            print('[INFO][DOWN] Muxing video\n')
+            result = mux_video(output)
+            if not result:
+                print('[WARN] There\'s no available muxers that can be used, skipping...')
+            elif result and os.path.isfile(result):
+                if not keep_:
+                    os.remove(output)
     print('[INFO] Finished downloading: {}'.format(output))
     exit(0)
 
