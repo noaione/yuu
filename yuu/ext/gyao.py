@@ -134,7 +134,7 @@ class GYAO:
         if resolution == 'worst':
             resolution = '240p-1'
 
-        v_id = re.findall(r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|title[\w])/(?P<p1>[\w]*.*)', self.url)
+        v_id = re.findall(r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|p|title[\w])/(?P<p1>[\w]*.*)', self.url)
         if not v_id:
             return None, 'Video URL are not valid'
 
