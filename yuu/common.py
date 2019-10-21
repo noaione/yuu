@@ -17,7 +17,7 @@ def get_parser(url):
     :return: A class of one of supported website
     """
     valid_abema = r'http(?:|s)://(?:abema\.tv)/(?:channels|video)/(?:\w*)(?:/|-\w*/)((?P<slot>slots/)|)(?P<video_id>.*[^-_])'
-    valid_gyao = r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|title[\w])/(?P<p1>[\w]*.*)'
+    valid_gyao = r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|p|title[\w])/(?P<p1>[\w]*.*)'
     valid_aniplus = r'http(?:|s)://(?:www\.|)aniplus-asia\.com/episode/(?P<video_id>[\w]*.*)'
     if re.match(valid_abema, url):
         return AbemaTV
