@@ -150,6 +150,34 @@ class AbemaTV:
         """
         return None
 
+    def authorize(self, username, password):
+        _ENDPOINT_MAIL = 'https://api.abema.io/v1/auth/user/email'
+        _ENDPOINT_OTP = 'https://api.abema.io/v1/auth/oneTimePassword'
+        mail_regex = r'^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
+        if re.search(mail_regex, username):
+            _ENDPOINT_USE = _ENDPOINT_MAIL
+            _USERNAME_METHOD = 'email'
+        else:
+            _ENDPOINT_USE = _ENDPOINT_OTP
+            _USERNAME_METHOD = 'userId'
+        auth_ = {
+            _USERNAME_METHOD: username,
+            "password": password
+        }
+
+        res = self.session.post(_ENDPOINT_USE, json=auth_)
+        if res.status_code > 299:
+            res_j = res.json()
+            return False, 'Wrong {} and password combination'.format(_USERNAME_METHOD)
+
+        res_j = res.json()
+        self.device_id = str(uuid.uuid4())
+        self.session.headers.update({'Authorization': 'bearer ' + res_j['token']})
+
+        self.authorized = True
+        return True, 'Authorized'
+
+
     def get_token(self):
         def key_secret(devid):
             SECRETKEY = (b"v+Gjs=25Aw5erR!J8ZuvRrCx*rGswhB&qdHd_SYerEWdU&a?3DzN9B"
