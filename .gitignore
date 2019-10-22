@@ -11,3 +11,5 @@ venv
 .idea
 *.bat
 *.js
+
+forget-blob
