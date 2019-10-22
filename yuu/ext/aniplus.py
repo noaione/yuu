@@ -5,10 +5,11 @@ from tqdm import tqdm
 from functools import partial
 
 class AniplusDownloader:
-    def __init__(self, files, key, iv, session):
+    def __init__(self, files, key, iv, url, session):
         self.files = files
         self.key = key # Ignored
         self.iv = iv # Ignored
+        self.url = url
         self.session = session
 
         self.merge = False
@@ -62,6 +63,8 @@ class Aniplus:
         self.authorization_required = True
         self.authorized = False
 
+        self.resumable = False
+
         self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'})
 
     def __repr__(self):
@@ -71,7 +74,7 @@ class Aniplus:
         """
         Return a :class: of the Downloader
         """
-        return AniplusDownloader(files, key, iv, self.session)
+        return AniplusDownloader(files, key, iv, self.url, self.session)
 
 
     def authorize(self, username, password):
