@@ -9,6 +9,7 @@ import time
 import uuid
 from base64 import urlsafe_b64encode
 from binascii import unhexlify
+from ..common import update_files_status
 
 import m3u8
 from Crypto.Cipher import AES
@@ -23,23 +24,24 @@ def is_channel(url):
 
 
 class AbemaTVDownloader:
-    def __init__(self, files, key, iv, session):
+    def __init__(self, files, key, url, iv, session):
         self.files = files
         self.key = key
         self.iv = iv
+        self.url = url
         self.session = session
 
         self.downloaded_files = []
         self.merge = True
 
         if os.name == "nt":
-            yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
+            self.yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
         else:
-            yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
-        if not os.path.isdir(yuu_folder):
-            os.mkdir(yuu_folder)
+            self.yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
+        if not os.path.isdir(self.yuu_folder):
+            os.mkdir(self.yuu_folder)
 
-        self.temporary_folder = tempfile.mkdtemp(dir=yuu_folder)
+        self.temporary_folder = tempfile.mkdtemp(dir=self.yuu_folder)
 
         self._aes = None
 
@@ -64,6 +66,7 @@ class AbemaTVDownloader:
                             vid = self.session.get(tsf)
                             vid = self._aes.decrypt(vid.content)
                             outf.write(vid)
+                            update_files_status(self.url, tsf, outputtemp)
                         except Exception as err:
                             print('[ERROR] Problem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
@@ -108,8 +111,10 @@ class AbemaTV:
         }
 
         self.authorization_required = False
-        self.authorized = True # Ignore for now
-        self.authorize = True # Ignore for now
+        self.authorized = False # Ignore for now
+        #self.authorize = True # Ignore for now
+
+        self.resumable = True
 
         self._STRTABLE = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
         self._HKEY = b"3AF0298C219469522A313570E8583005A642E73EDD58E3EA2FB7339D3DF1597E"
@@ -137,7 +142,13 @@ class AbemaTV:
         """
         Return a :class: of the Downloader
         """
-        return AbemaTVDownloader(files, key, iv, self.session)
+        return AbemaTVDownloader(files, key, iv, self.url, self.session)
+
+    def resume_prepare(self):
+        """
+        Add support for resuming files, this function will prepare everything to start resuming download.
+        """
+        return None
 
     def get_token(self):
         def key_secret(devid):
@@ -182,6 +193,9 @@ class AbemaTV:
                 print('[DEBUG] Secret Key: {}'.format(finalize))
 
             return finalize
+
+        if self.authorized: # Ignore this if already login
+            return True, 'Success'
 
         deviceid = str(uuid.uuid4())
         if self.verbose:

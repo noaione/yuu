@@ -6,12 +6,15 @@ import tempfile
 import m3u8
 from tqdm import tqdm
 
+from ..common import update_files_status
+
 
 class GYAODownloader:
-    def __init__(self, files, key, iv, session):
+    def __init__(self, files, key, iv, url, session):
         self.files = files
         self.key = key # Ignored
         self.iv = iv # Ignored
+        self.url = url
         self.session = session
 
         self.downloaded_files = []
@@ -36,6 +39,7 @@ class GYAODownloader:
                         try:
                             vid = self.session.get(tsf)
                             outf.write(vid.content)
+                            update_files_status(self.url, tsf, outputtemp)
                         except Exception as err:
                             print('[ERROR] Problem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
@@ -78,6 +82,9 @@ class GYAO:
         self.authorization_required = False
         self.authorized = True # Ignore for now
         self.authorize = True # Ignore for now
+
+        self.resumable = True
+
         # Use Chrome UA
         self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'})
 
@@ -89,7 +96,7 @@ class GYAO:
         """
         Return a :class: of the Downloader
         """
-        return GYAODownloader(files, key, iv, self.session)
+        return GYAODownloader(files, key, iv, self.url, self.session)
 
     def get_token(self):
         headers = {'X-User-Agent': 'Unknown Pc GYAO!/2.0.0 Web'}
