@@ -58,7 +58,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
     upstream_version = upstream_data['version']
     if version_compare(upstream_version) > 0:
-        print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
+        print('[INFO] There\'s new version available to download, please update using `pip install yuu=={nv} -U`.'.format(nv=upstream_version))
         print('====== Changelog v{} ======'.format(upstream_version))
         print(upstream_data['changelog'])
         exit(0)
