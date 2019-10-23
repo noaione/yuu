@@ -156,6 +156,8 @@ class AbemaTV:
 
     def authorize(self, username, password):
         if not self.device_id:
+            if self.verbose:
+                print('[INFO] {}: Fetching temporary token'.format(self.type))
             res, reas = self.get_token() # Abema needs authorization header before authenticating
             if not res:
                 return res, reas
