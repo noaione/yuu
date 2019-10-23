@@ -76,8 +76,7 @@ class GYAO:
         }
 
         self.authorization_required = False
-        self.authorized = True # Ignore for now
-        self.authorize = True # Ignore for now
+        self.authorized = False # Ignore for now
 
         self.resumable = True
 
@@ -93,6 +92,12 @@ class GYAO:
         Return a :class: of the Downloader
         """
         return GYAODownloader(files, key, iv, self.url, self.session)
+
+    def authorize(self, username, password):
+        """
+        Bypassed since I need an account to test login
+        """
+        return True, None
 
     def get_token(self):
         headers = {'X-User-Agent': 'Unknown Pc GYAO!/2.0.0 Web'}
