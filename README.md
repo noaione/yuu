@@ -1,8 +1,6 @@
 # (koito) yuu 
 A simple AbemaTV and other we(e)bsite video downloader in python
 
-Old version/legacy mode: [legacy branch](https://github.com/noaione/yuu/tree/legacy)
-
 [![koito yuu](https://p.n4o.xyz/i/fzpt7mt.jpg)](https://anilist.co/character/123528/Yuu-Koito)
 
 [![pypi version](https://img.shields.io/pypi/v/yuu.svg?style=for-the-badge)](https://pypi.org/project/yuu/) [![python version](https://img.shields.io/pypi/pyversions/yuu.svg?style=for-the-badge)](#) [![License](https://img.shields.io/github/license/noaione/yuu.svg?style=for-the-badge)](https://github.com/noaione/yuu/blob/master/LICENSE)
