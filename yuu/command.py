@@ -36,63 +36,6 @@ def streams_list():
         print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + k, log_, premi_, proxy_, width=18))
 
 
-@cli.command("resume", short_help="Resume a download")
-@click.argument("input", metavar="<URL site>")
-@click.option("--username", "-U", required=False, default=None, help="Use username/password to download premium video")
-@click.option("--password", "-P", required=False, default=None, help="Use username/password to download premium video")
-@click.option("--proxy", "-p", required=False, default=None, metavar="<ip:port/url>", help="Use http(s)/socks5 proxies (please add `socks5://` if you use socks5)")
-@click.option('--verbose', '-v', is_flag=True, help="Enable verbosity")
-def main_resuming(input, username, password, proxy, verbose):
-    """
-    Main resuming processing for downloading
-    """
-    print('[INFO] Starting yuu v{ver}...'.format(ver=__version__))
-    print('[INFO] This feature is not yet enabled.')
-    exit(0)
-
-    upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
-    upstream_version = upstream_data['version']
-    if version_compare(upstream_version) > 0:
-        print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
-        exit(0)
-
-    sesi = requests.Session()
-    try:
-        sesi.get('http://httpbin.org/get')
-        pmode = "No proxy"
-    except:
-        print('[ERROR] No connection available to make requests')
-        exit(1)
-
-    if proxy:
-        print('[INFO] Testing proxy')
-        try:
-            proxy_test = [
-                {'http': proxy, 'https': proxy},
-                {'https': proxy},
-                {'http': proxy}
-            ]
-            for mode in proxy_test:
-                try:
-                    if verbose:
-                        print('[DEBUG] Testing {x} mode proxy'.format(x="+".join(mode.keys())))
-                    sesi.proxies = mode
-                    sesi.get('http://httpbin.org/get') # Test website to check if proxy works or not
-                    pmode = "+".join(mode.keys()).upper() + "/SOCKS5"
-                    break
-                except requests.exceptions.RequestException:
-                    if verbose:
-                        print('[DEBUG] Failed')
-                    if mode == proxy_test[-1]:
-                        print('[ERROR] Cannot connect to proxy (Request timeout)')
-                        exit(1)
-        except KeyboardInterrupt:
-            print('[WARN] Interrupted')
-            exit(0)
-    if verbose:
-        print('[DEBUG] Using proxy mode: {}'.format(pmode))
-
-
 @cli.command("download", short_help="Download a video from yuu Supported we(e)bsite")
 @click.argument("input", metavar="<URL site>")
 @click.option("--username", "-U", required=False, default=None, help="Use username/password to download premium video")
@@ -114,7 +57,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
 
     upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
     upstream_version = upstream_data['version']
-    if upstream_version != __version__:
+    if version_compare(upstream_version) > 0:
         print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
         print('====== Changelog v{} ======'.format(upstream_version))
         print(upstream_data['changelog'])
