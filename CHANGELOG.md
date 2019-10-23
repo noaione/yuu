@@ -71,3 +71,9 @@
 - Add support for some website (Abema, Aniplus, GYAO!)
 - Add support for easy additional new website support
 - More on the changes from commit [`1f472c3`](https://github.com/noaione/yuu/commit/1f472c306e71af4ca5ee6c68d84fb296a347615a) to [`202532a`](https://github.com/noaione/yuu/commit/202532ad767306dd4096c6c5a9114c10f04def1a)
+
+### Version 1.1.0
+- Add muxing support
+- Add support for AbemaTV Premium Video
+- Some bug fixing that I don't even know if it's even fixed.
+- Removed `legacy` branch link
