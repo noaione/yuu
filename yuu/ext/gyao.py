@@ -133,9 +133,11 @@ class GYAO:
                 return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
 
         if resolution == 'best':
-            resolution = '1080p-0'
-        if resolution == 'worst':
-            resolution = '240p-1'
+            _resolution = '1080p-0'
+        elif resolution == 'worst':
+            _resolution = '240p-1'
+        else:
+            _resolution = resolution
 
         v_id = re.findall(r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|p|title[\w])/(?P<p1>[\w]*.*)', self.url)
         if not v_id:
@@ -192,22 +194,36 @@ class GYAO:
         r2_all = m3u8.loads(r2.text)
 
         band_list_v4 = []
-        for v4 in r_all.playlists:
-            s_info = v4.stream_info
+        for v4d in r_all.playlists:
+            s_info = v4d.stream_info
             audio_inf = s_info.audio.strip('audio')
-            if resolution[-2:] == audio_inf:
-                band_list_v4.append(s_info.bandwidth)
+            if _resolution[-2:] == audio_inf:
+                band_list_v4.append((s_info.bandwidth, str(s_info.resolution[1]) + audio_inf))
 
-        for v3 in r2_all.playlists:
-            bw = v3.stream_info.bandwidth
-            for bwv4 in band_list_v4:
+        for v3d in r2_all.playlists:
+            bw = v3d.stream_info.bandwidth
+            for v4d in band_list_v4:
+                bwv4, resv4 = v4d
                 if bw == bwv4:
-                    self.m3u8_url = v3.uri
-                    self.resolution = resolution
+                    self.m3u8_url = v3d.uri
+                    self.resolution = resv4
                     self.est_filesize = round(bw / 1024 / 5, 2)
+                    break
 
         if not self.m3u8_url:
-            return None, 'Resolution {} are not exist in this video.'.format(self.resolution)
+            if resolution == 'worst':
+                need_band = sorted(band_list_v4)[0]
+            elif resolution == 'best':
+                need_band = sorted(band_list_v4, reverse=True)[0]
+            else:
+                return None, 'Resolution {} are not exist in this video.'.format(self.resolution)
+            for v3 in r2_all.playlists:
+                bw = v3.stream_info.bandwidth
+                if bw == need_band:
+                    self.m3u8_url = v3.uri
+                    self.resolution = _resolution
+                    self.est_filesize = round(bw / 1024 / 5, 2)
+                    break
 
         return output_name, None
 
