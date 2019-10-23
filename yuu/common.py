@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from .ext import *
 
-__version__ = "1.0.1"
+__version__ = "1.0.0"
 
 
 def get_parser(url):
@@ -79,53 +79,3 @@ def _prepare_yuu_data():
     if not os.path.isfile(os.path.join(yuu_folder, 'yuu_download.json')):
         with open(os.path.join(yuu_folder, 'yuu_download.json'), 'w') as f:
             json.dump({}, f)
-
-
-def read_yuu_data():
-    if os.name == "nt":
-        yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
-    else:
-        yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
-
-    with open(os.path.join(yuu_folder, 'yuu_download.json')) as f:
-        return json.load(f)
-
-
-def save_yuu_data(data):
-    if os.name == "nt":
-        yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
-    else:
-        yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
-
-    with open(os.path.join(yuu_folder, 'yuu_download.json')) as f:
-        json.dump(data, f)
-
-
-def update_files_status(url, url_files, path):
-    yuuData = read_yuu_data()
-
-    yuuData[url]["files"][url_files]["downloaded"] = True
-    yuuData[url]["files"][url_files]["path"] = path
-
-    save_yuu_data(yuuData)
-
-
-def write_yuu_data(url, files, output, mux, username, password, resumeable):
-    yuuData = read_yuu_data()
-
-    entries = dict()
-    files_list = dict()
-    entries["output_fn"] = output
-    entries["mux"] = mux
-
-    for f in files:
-        files_list[f] = {"downloaded": False, "path": None}
-    entries["files"] = files_list
-
-    entries["username"] = username
-    entries["password"] = password
-    entries["resumable"] = resumeable
-    
-    yuuData[url] = entries
-
-    save_yuu_data(yuuData)

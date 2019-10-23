@@ -9,7 +9,7 @@ import time
 import uuid
 from base64 import urlsafe_b64encode
 from binascii import unhexlify
-from ..common import update_files_status
+from .common import update_files_status
 
 import m3u8
 from Crypto.Cipher import AES
@@ -24,10 +24,15 @@ def is_channel(url):
 
 
 class AbemaTVDownloader:
-    def __init__(self, files, key, url, iv, session):
+    def __init__(self, files, key, iv, url, session):
         self.files = files
         self.key = key
-        self.iv = iv
+
+        if iv.startswith('0x'):
+            self.iv = iv[2:]
+        else:
+            self.iv = iv
+
         self.url = url
         self.session = session
 
@@ -47,8 +52,6 @@ class AbemaTVDownloader:
 
 
     def setup_decryptor(self):
-        if self.iv.startswith('0x'):
-            self.iv = self.iv[2:]
         self.iv = unhexlify(self.iv)
         self._aes = AES.new(self.key, AES.MODE_CBC, IV=self.iv)
 
@@ -66,7 +69,8 @@ class AbemaTVDownloader:
                             vid = self.session.get(tsf)
                             vid = self._aes.decrypt(vid.content)
                             outf.write(vid)
-                            update_files_status(self.url, tsf, outputtemp)
+                            #
+                            # update_files_status(self.url, tsf, outputtemp)
                         except Exception as err:
                             print('[ERROR] Problem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
@@ -134,6 +138,9 @@ class AbemaTV:
         self._PROGRAMAPI = 'https://api.abema.io/v1/video/programs/'
         self._CHANNELAPI = 'https://api.abema.io/v1/media/slots/'
 
+        # Use Chrome UA
+        self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'})
+
 
     def __repr__(self):
         return '<yuu.AbemaTV: Verbose={}, Resolution={}, Device ID={}, m3u8 URL={}>'.format(self.verbose, self.resolution, self.device_id, self.m3u8_url)
@@ -151,6 +158,10 @@ class AbemaTV:
         return None
 
     def authorize(self, username, password):
+        if not self.device_id:
+            res, reas = self.get_token() # Abema needs authorization header before authenticating
+            if not res:
+                return res, reas
         _ENDPOINT_MAIL = 'https://api.abema.io/v1/auth/user/email'
         _ENDPOINT_OTP = 'https://api.abema.io/v1/auth/oneTimePassword'
         mail_regex = r'^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$'
@@ -168,10 +179,13 @@ class AbemaTV:
         res = self.session.post(_ENDPOINT_USE, json=auth_)
         if res.status_code > 299:
             res_j = res.json()
+            if self.verbose:
+                print('[ERROR] Abema Response: {}'.format(res_j['message']))
             return False, 'Wrong {} and password combination'.format(_USERNAME_METHOD)
 
         res_j = res.json()
-        self.device_id = str(uuid.uuid4())
+        if self.verbose:
+            print('[DEBUG] Authentication Token: {}'.format(res_j['token']))
         self.session.headers.update({'Authorization': 'bearer ' + res_j['token']})
 
         self.authorized = True
