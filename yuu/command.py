@@ -5,7 +5,7 @@ import subprocess
 import click
 import requests
 
-from .common import __version__, get_parser, merge_video, mux_video, _prepare_yuu_data
+from .common import __version__, get_parser, merge_video, mux_video, version_compare, _prepare_yuu_data
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_options=True)
 
@@ -52,7 +52,7 @@ def main_resuming(input, username, password, proxy, verbose):
 
     upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
     upstream_version = upstream_data['version']
-    if upstream_version != __version__:
+    if version_compare(upstream_version) > 0:
         print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
         exit(0)
 

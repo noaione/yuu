@@ -10,6 +10,14 @@ from .ext import *
 __version__ = "1.1.0"
 
 
+def version_compare(new_version):
+    def _cmp(a, b):
+        return (a > b) - (a < b)
+    def normalize(v):
+        return [int(x) for x in re.sub(r'(\.0+)*$','', v).split(".")]
+    return _cmp(normalize(new_version), normalize(__version__))
+
+
 def get_parser(url):
     """
     Function that are called first time to check if it's a valid supported link
