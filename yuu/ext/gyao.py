@@ -34,7 +34,7 @@ class GYAODownloader:
                     outputtemp = self.temporary_folder + '\\' + os.path.basename(tsf)
                     with open(outputtemp, 'wb') as outf:
                         try:
-                            vid = s.elf.session.get(tsf)
+                            vid = self.session.get(tsf)
                             outf.write(vid.content)
                         except Exception as err:
                             print('[ERROR] Problem occured\nreason: {}'.format(err))
