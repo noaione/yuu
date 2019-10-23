@@ -182,11 +182,12 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
             print('[ERROR] {}: {}'.format(yuuParser.type, reason))
             exit(1)
 
-    print('[INFO] {}: Fetching user token'.format(yuuParser.type))
-    result, reason = yuuParser.get_token()
-    if not result:
-        print('[ERROR] {}: {}'.format(yuuParser.type, reason))
-        exit(1)
+    if not yuuParser.authorized:
+        print('[INFO] {}: Fetching temporary user token'.format(yuuParser.type))
+        result, reason = yuuParser.get_token()
+        if not result:
+            print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+            exit(1)
 
     print('[INFO] {}: Parsing url'.format(yuuParser.type))
     output_name, reason = yuuParser.parse(res, resR)
