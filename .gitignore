@@ -10,5 +10,7 @@ __pycache__
 venv
 .idea
 *.bat
-forget-blob
 *.js
+
+*.mp4
+gotoubun01-abema180.mkv
