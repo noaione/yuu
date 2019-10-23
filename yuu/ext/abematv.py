@@ -9,7 +9,6 @@ import time
 import uuid
 from base64 import urlsafe_b64encode
 from binascii import unhexlify
-from .common import update_files_status
 
 import m3u8
 from Crypto.Cipher import AES
@@ -69,8 +68,6 @@ class AbemaTVDownloader:
                             vid = self.session.get(tsf)
                             vid = self._aes.decrypt(vid.content)
                             outf.write(vid)
-                            #
-                            # update_files_status(self.url, tsf, outputtemp)
                         except Exception as err:
                             print('[ERROR] Problem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
