@@ -60,8 +60,6 @@ class Ponimu:
         # Need to deobfuscate javascript
         return None
 
-    
-
     def authorize(self, username, password):
         _AUTH_URL = 'https://api.ponimu.com/api/authenticate'
         creds = {

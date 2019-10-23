@@ -6,7 +6,7 @@ import tempfile
 import m3u8
 from tqdm import tqdm
 
-from ..common import update_files_status
+from .common import update_files_status
 
 
 class GYAODownloader:
@@ -39,7 +39,7 @@ class GYAODownloader:
                         try:
                             vid = self.session.get(tsf)
                             outf.write(vid.content)
-                            update_files_status(self.url, tsf, outputtemp)
+                            #update_files_status(self.url, tsf, outputtemp)
                         except Exception as err:
                             print('[ERROR] Problem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder

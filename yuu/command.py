@@ -36,7 +36,7 @@ def streams_list():
         print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + k, log_, premi_, proxy_, width=18))
 
 
-@cli.command("resume", "Resume a download")
+@cli.command("resume", short_help="Resume a download")
 @click.argument("input", metavar="<URL site>")
 @click.option("--username", "-U", required=False, default=None, help="Use username/password to download premium video")
 @click.option("--password", "-P", required=False, default=None, help="Use username/password to download premium video")
@@ -47,6 +47,8 @@ def main_resuming(input, username, password, proxy, verbose):
     Main resuming processing for downloading
     """
     print('[INFO] Starting yuu v{ver}...'.format(ver=__version__))
+    print('[INFO] This feature is not yet enabled.')
+    exit(0)
 
     upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
     upstream_version = upstream_data['version']
@@ -99,7 +101,7 @@ def main_resuming(input, username, password, proxy, verbose):
 @click.option("--resolution", "-r", "res", required=False, default="best", help="Resolution to be downloaded (Default: best)")
 @click.option("--resolutions", "-R", "resR", is_flag=True, help="Show available resolutions")
 @click.option("--mux", is_flag=True, help="Mux .ts to .mkv (Need ffmpeg or mkvmerge)")
-@click.option("--keep-temp-files", "-keep", "keep_", is_flag=True, help="Keep downloaded fragment and combined fragment (If muxing) (Default: no)")
+@click.option("--keep-fragments", "-keep", "keep_", is_flag=True, help="Keep downloaded fragment and combined fragment (If muxing) (Default: no)")
 @click.option("--output", "-o", required=False, default=None, help="Output filename")
 @click.option('--verbose', '-v', is_flag=True, help="Enable verbosity")
 def main_downloader(input, username, password, proxy, res, resR, mux, keep_, output, verbose):
@@ -110,16 +112,13 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     """
     print('[INFO] Starting yuu v{ver}...'.format(ver=__version__))
 
-    try:
-        upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
-        upstream_version = upstream_data['version']
-        if upstream_version != __version__:
-            print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
-            print('====== Changelog v{} ======'.format(upstream_version))
-            print(upstream_data['changelog'])
-            exit(0)
-    except:
-        print('[WARN] Failed checking for new update, skipping...')
+    upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
+    upstream_version = upstream_data['version']
+    if upstream_version != __version__:
+        print('[INFO] There\'s new version available to download, please update using `pip install yuu -U`.')
+        print('====== Changelog v{} ======'.format(upstream_version))
+        print(upstream_data['changelog'])
+        exit(0)
 
     sesi = requests.Session()
     try:
@@ -170,12 +169,14 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
         if username is None and password is None:
             print('[WARN] You need to be logged in to use download from this VOD')
             exit(1)
+        print('[INFO] {}: Authenticating'.format(yuuParser.type))
         result, reason = yuuParser.authorize(username, password)
         if not result:
             print('[ERROR] {}: {}'.format(yuuParser.type, reason))
             exit(1)
 
     if username and password and not yuuParser.authorized:
+        print('[INFO] {}: Authenticating'.format(yuuParser.type))
         result, reason = yuuParser.authorize(username, password)
         if not result:
             print('[ERROR] {}: {}'.format(yuuParser.type, reason))
