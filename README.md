@@ -54,6 +54,9 @@ Options:
                              `socks5://` if you use socks5)
   -r, --resolution TEXT      Resolution to be downloaded (Default: best)
   -R, --resolutions          Show available resolutions
+  --mux                      Mux .ts to .mkv (Need ffmpeg or mkvmerge)
+  -keep, --keep-fragments    Keep downloaded fragment and combined fragment
+                             (If muxing) (Default: no)
   -o, --output TEXT          Output filename
   -v, --verbose              Enable verbosity
   -h, --help                 Show this message and exit.
@@ -65,7 +68,9 @@ Options:
     - Example: `127.0.0.1:1080`, `http://127.0.0.1:1080`, `http://user:pass@127.0.0.1:1080`, `socks5://127.0.0.1:1080`
 - **`--resolution/-r`**: Target resolution
 - **`--resolutions/-R`**: Show available resolution
-- **`--output/-o`**: Output filename (Automated if there's nothing omitted)
+- **`--mux`**: Mux output file to .mkv
+- **`--keep-fragments/-keep`**: Keep downloaded fragment and combined fragment
+- **`--output/-o`**: Output filename (Automated if there's nothing omitted) (Default: no)
 - **`--version/-V`**: Show version number
 - **`--verbose/-v`**: Enable verbose/debug mode
 
