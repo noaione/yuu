@@ -356,6 +356,12 @@ class AbemaTV:
         iv = x.keys[0].iv
         ticket = x.keys[0].uri[18:]
 
+        parsed_files = []
+        for f in files:
+            if f.startswith('/tvspg') or f.startswith('/tspg'):
+                f = 'https://ds-vod-abematv.akamaized.net' + f
+            parsed_files.append(f)
+
         if self.resolution[:-1] != resgex:
             self.resolution = resgex + 'p'
         if self.verbose:
@@ -370,7 +376,7 @@ class AbemaTV:
         self.est_filesize = round((round(n) * self.bitrate_calculation[self.resolution]) / 1024 / 6, 2)
         self.ticket = ticket
 
-        return files, iv[2:], 'Success'
+        return parsed_files, iv[2:], 'Success'
 
 
     def get_video_key(self):
