@@ -358,7 +358,7 @@ class AbemaTV:
 
         parsed_files = []
         for f in files:
-            if f.startswith('/tvspg') or f.startswith('/tspg'):
+            if f.startswith('/tsvpg') or f.startswith('/tspg'):
                 f = 'https://ds-vod-abematv.akamaized.net' + f
             parsed_files.append(f)
 
