@@ -11,10 +11,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_optio
 
 @click.group(context_settings=CONTEXT_SETTINGS, invoke_without_command=True)
 @click.option('--version', '-V', is_flag=True, help="Show current version")
-@click.option('--update', '-U', is_flag=True, help="Update yuu to the newest version")
-def cli(version=False, update=False):
+def cli(version=False):
     """
-    A simple AbemaTV video downloader
+    A simple AbemaTV and other we(e)bsite video downloader
     """
     if version:
         print('yuu v{} - Created by NoAiOne'.format(__version__))
@@ -51,7 +50,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     """
     Main command to access downloader
     
-    Check supported streams for yuu: `yuu streams`
+    Check supported streams from yuu with `yuu streams`
     """
     print('[INFO] Starting yuu v{ver}...'.format(ver=__version__))
 
