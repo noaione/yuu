@@ -51,7 +51,7 @@
 - Change from argparse to click for commands parsing
 - Add updater to make sure people using the newest version
 - Fix some check
-- Add a error handling if the video cannot be dowwnloaded
+- Add an error handling if the video cannot be downloaded
 - Cleaning the code
 
 #### Version 0.2.1
