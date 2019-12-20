@@ -12,15 +12,6 @@ from .common import (__version__, _prepare_yuu_data, get_parser,
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_options=True)
 
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s %(name)-1s -- [%(levelname)s]: %(message)s',
-                    datefmt='%Y-%m-%d %H:%M:%S',
-                    filename='{f}/yuu_log-{t}.log'.format(f=get_yuu_folder(), t=datetime.today().strftime("%Y-%m-%d_%HH%MM%SS")),
-                    filemode='w')
-
-yuu_logger = yuu_logger.getLogger('yuu')
-
-
 @click.group(context_settings=CONTEXT_SETTINGS, invoke_without_command=True)
 @click.option('--version', '-V', is_flag=True, help="Show current version")
 def cli(version=False):
@@ -64,6 +55,12 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     
     Check supported streams from yuu with `yuu streams`
     """
+    yuu_logger = yuu_logger.getLogger('yuu')
+    fh = logging.FileHandler('{f}/yuu_log-{t}.log'.format(f=get_yuu_folder(), t=datetime.today().strftime("%Y-%m-%d_%HH%MM%SS")), encoding="utf-8")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(logging.Formatter('%(asctime)s %(name)-1s -- [%(levelname)s]: %(message)s'))
+    yuu_logger.addHandler(fh)
+
     console = logging.StreamHandler()
     LOG_LEVEL = logging.INFO
     if verbose:
