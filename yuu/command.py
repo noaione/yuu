@@ -2,6 +2,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 from datetime import datetime
 
 import click
@@ -56,12 +57,12 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     Check supported streams from yuu with `yuu streams`
     """
     yuu_logger = logging.getLogger('yuu')
-    fh = logging.FileHandler('{f}/yuu_log-{t}.log'.format(f=get_yuu_folder(), t=datetime.today().strftime("%Y-%m-%d_%HH%MM%SS")), encoding="utf-8")
+    fh = logging.FileHandler('{f}/yuu_log-{t}.log'.format(f=get_yuu_folder(), t=datetime.today().strftime("%Y-%m-%d_%HH%MM")), encoding="utf-8")
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter('%(asctime)s %(name)-1s -- [%(levelname)s]: %(message)s'))
     yuu_logger.addHandler(fh)
 
-    console = logging.StreamHandler()
+    console = logging.StreamHandler(sys.stdout)
     LOG_LEVEL = logging.INFO
     if verbose:
         LOG_LEVEL = logging.DEBUG
