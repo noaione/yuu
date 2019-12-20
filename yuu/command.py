@@ -1,13 +1,25 @@
+import logging
 import os
 import shutil
 import subprocess
+from datetime import datetime
 
 import click
 import requests
 
-from .common import __version__, get_parser, merge_video, mux_video, version_compare, _prepare_yuu_data
+from .common import (__version__, _prepare_yuu_data, get_parser,
+                     get_yuu_folder, merge_video, mux_video, version_compare)
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_options=True)
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(name)-1s -- [%(levelname)s]: %(message)s',
+                    datefmt='%Y-%m-%d %H:%M:%S',
+                    filename='{f}/yuu_log-{t}.log'.format(f=get_yuu_folder(), t=datetime.today().strftime("%Y-%m-%d_%HH%MM%SS")),
+                    filemode='w')
+
+yuu_logger = yuu_logger.getLogger('yuu')
+
 
 @click.group(context_settings=CONTEXT_SETTINGS, invoke_without_command=True)
 @click.option('--version', '-V', is_flag=True, help="Show current version")
@@ -52,88 +64,100 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     
     Check supported streams from yuu with `yuu streams`
     """
-    print('[INFO] Starting yuu v{ver}...'.format(ver=__version__))
+    console = logging.StreamHandler()
+    LOG_LEVEL = logging.INFO
+    if verbose:
+        LOG_LEVEL = logging.DEBUG
+    console.setLevel(LOG_LEVEL)
+    formatter1 = logging.Formatter('[%(levelname)s] %(message)s')
+    console.setFormatter(formatter1)
+    yuu_logger.addHandler(console)
+
+    yuu_logger.info('Starting yuu v{ver}...'.format(ver=__version__))
 
     upstream_data = requests.get("https://pastebin.com/raw/Bt3ZLjfu").json()
     upstream_version = upstream_data['version']
     if version_compare(upstream_version) > 0:
-        print('[INFO] There\'s new version available to download, please update using `pip install yuu=={nv} -U`.'.format(nv=upstream_version))
+        yuu_logger.info('There\'s new version available to download, please update using `pip install yuu=={nv} -U`.'.format(nv=upstream_version))
+        yuu_logger.log(0, '====== Changelog v{} ======'.format(upstream_version))
+        yuu_logger.log(0, upstream_data['changelog'])
         print('====== Changelog v{} ======'.format(upstream_version))
         print(upstream_data['changelog'])
         exit(0)
 
     sesi = requests.Session()
-    try:
-        sesi.get('http://httpbin.org/get')
-        pmode = "No proxy"
-    except:
-        print('[ERROR] No connection available to make requests')
-        exit(1)
 
     if proxy:
         sesi.proxies = {'http': proxy, 'https': proxy}
-    if verbose:
-        print('[DEBUG] Using proxy: {}'.format(proxy))
+    yuu_logger.debug('Using proxy: {}'.format(proxy))
 
     _prepare_yuu_data() # Prepare yuu_download.json
     yuuParser = get_parser(input)
 
     if not yuuParser:
-        print('[ERROR] Unknown url format')
+        yuu_logger.error('Unknown url format')
         exit(1)
 
-    yuuParser = yuuParser(input, sesi, verbose)
+    yuuParser = yuuParser(input, sesi)
+    formatter3 = logging.Formatter('[%(levelname)s] {}: %(message)s'.format(yuuParser.type))
+    yuu_logger.removeHandler(console)
+    console.setFormatter(formatter3)
+    yuu_logger.addHandler(console)
 
     if yuuParser.authorization_required:
         if username is None and password is None:
-            print('[WARN] You need to be logged in to use download from this VOD')
+            yuu_logger.warning('You need to be logged in to use download from this VOD')
             exit(1)
-        print('[INFO] {}: Authenticating'.format(yuuParser.type))
+        yuu_logger.info('Authenticating')
         result, reason = yuuParser.authorize(username, password)
         if not result:
-            print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+            yuu_logger.error('{}'.format(reason))
             exit(1)
-
     if username and password and not yuuParser.authorized:
-        print('[INFO] {}: Authenticating'.format(yuuParser.type))
+        yuu_logger.info('Authenticating')
         result, reason = yuuParser.authorize(username, password)
         if not result:
-            print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+            yuu_logger.error('{}'.format(reason))
             exit(1)
 
     if not yuuParser.authorized:
-        print('[INFO] {}: Fetching temporary user token'.format(yuuParser.type))
+        yuu_logger.info('Fetching temporary user token'.format(yuuParser.type))
         result, reason = yuuParser.get_token()
         if not result:
-            print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+            yuu_logger.error('{}'.format(reason))
             exit(1)
 
-    print('[INFO] {}: Parsing url'.format(yuuParser.type))
+    yuu_logger.info('Parsing url'.format(yuuParser.type))
     output_name, reason = yuuParser.parse(res, resR)
     if not output_name:
-        print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+        yuu_logger.error('{}'.format(reason))
         exit(1)
     if resR:
-        print('[INFO] {}: Checking available resolution'.format(yuuParser.type))
-        avares = yuuParser.resolutions()
-        print('[INFO] {}: Available resolution:'.format(yuuParser.type))
+        yuu_logger.info('Checking available resolution'.format(yuuParser.type))
+        avares, reason = yuuParser.resolutions()
+        if not avares:
+            yuu_logger.error('{}'.format(reason))
+            exit(1)
+        yuu_logger.info('Available resolution:'.format(yuuParser.type))
+        yuu_logger.log('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
         print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
         for res in avares:
             r_c, wxh = res
             vidq, audq = yuuParser.resolution_data[r_c]
+            yuu_logger.log('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
             print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
         exit(0)
 
-    print('[INFO] {}: Parsing m3u8'.format(yuuParser.type))
+    yuu_logger.info('Parsing m3u8'.format(yuuParser.type))
     files, iv, reason = yuuParser.parse_m3u8()
 
     if not files:
-        print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+        yuu_logger.error('{}'.format(reason))
         exit(1)
 
     if yuuParser.resolution != res and res not in ['best', 'worst']:
-        print('[WARN] Resolution {} are not available'.format(res))
-        print('[WARN] Switching to {}'.format(yuuParser.resolution))
+        yuu_logger.warn('Resolution {} are not available'.format(res))
+        yuu_logger.warn('Switching to {}'.format(yuuParser.resolution))
         res = yuuParser.resolution
 
     output = yuuParser.check_output(output, output_name)
@@ -142,16 +166,21 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     for char in illegalchar:
         output = output.replace(char, '_')
 
-    print('[INFO] {}: Fetching video key'.format(yuuParser.type))
+    yuu_logger.info('Fetching video key'.format(yuuParser.type))
     video_key, reason = yuuParser.get_video_key()
     if not video_key:
-        print('[ERROR] {}: {}'.format(yuuParser.type, reason))
+        yuu_logger.error('{}'.format(reason))
         exit(1)
 
-    print('[INFO][DOWN] Starting downloader...')
-    print('[INFO][DOWN] Output: {}'.format(output))
-    print('[INFO][DOWN] Resolution: {}'.format(yuuParser.resolution))
-    print('[INFO][DOWN] Estimated file size: {} MiB'.format(yuuParser.est_filesize))
+    formatter2 = logging.Formatter('[%(levelname)s][DOWN] %(message)s')
+    yuu_logger.removeHandler(console)
+    console.setFormatter(formatter2)
+    yuu_logger.addHandler(console)
+
+    yuu_logger.info('Starting downloader...')
+    yuu_logger.info('Output: {}'.format(output))
+    yuu_logger.info('Resolution: {}'.format(yuuParser.resolution))
+    yuu_logger.info('Estimated file size: {} MiB'.format(yuuParser.est_filesize))
 
     # Initialize Download Process
     yuuDownloader = yuuParser.get_downloader(files, video_key, iv)
@@ -164,25 +193,25 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     else:
         yuuDownloader.download_chunk(output)
         if mux:
-            print('[INFO][DOWN] Muxing video\n')
+            yuu_logger.info('Muxing video\n')
             mux_video(output)
     if yuuDownloader.merge:
-        print('[INFO][DOWN] Finished downloading')
-        print('[INFO][DOWN] Merging video')
+        yuu_logger.info('Finished downloading')
+        yuu_logger.info('Merging video')
         merge_video(dl_list, output)
         if not keep_:
             shutil.rmtree(temp_dir)
     if mux:
         if os.path.isfile(output):
-            print('[INFO][DOWN] Muxing video\n')
+            yuu_logger.info('Muxing video\n')
             result = mux_video(output)
             if not result:
-                print('[WARN] There\'s no available muxers that can be used, skipping...')
+                yuu_logger.warn('There\'s no available muxers that can be used, skipping...')
             elif result and os.path.isfile(result):
                 if not keep_:
                     os.remove(output)
             output = result
-    print('[INFO] Finished downloading: {}'.format(output))
+    yuu_logger.info('Finished downloading: {}'.format(output))
     exit(0)
 
 

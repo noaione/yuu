@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from .ext import *
 
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 
 def version_compare(new_version):
@@ -76,13 +76,18 @@ def mux_video(old_file):
     return '{f}.mkv'.format(f=fn_)
 
 
-def _prepare_yuu_data():
+def get_yuu_folder():
     if os.name == "nt":
         yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
     else:
         yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
     if not os.path.isdir(yuu_folder):
         os.mkdir(yuu_folder)
+    return yuu_folder
+
+
+def _prepare_yuu_data():
+    yuu_folder = get_yuu_folder()
 
     if not os.path.isfile(os.path.join(yuu_folder, 'yuu_download.json')):
         with open(os.path.join(yuu_folder, 'yuu_download.json'), 'w') as f:
