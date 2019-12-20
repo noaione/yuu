@@ -359,10 +359,9 @@ class AbemaTV:
 
         if self.resolution[:-1] != resgex:
             self.resolution = resgex + 'p'
-        if self.verbose:
-            self.yuu_logger.debug('Total files: {}'.format(len(files)))
-            self.yuu_logger.debug('IV: {}'.format(iv))
-            self.yuu_logger.debug('Ticket key: {}'.format(ticket))
+        self.yuu_logger.debug('Total files: {}'.format(len(files)))
+        self.yuu_logger.debug('IV: {}'.format(iv))
+        self.yuu_logger.debug('Ticket key: {}'.format(ticket))
 
         n = 0.0
         for seg in x.segments:
@@ -493,7 +492,9 @@ class AbemaTV:
                     temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
             ava_reso.append(temp_)
 
-        self.yuu_logger.debug('Resolution list: {}'.format(', '.join(ava_reso)))
+        if ava_reso:
+            reso = [r[0] for r in ava_reso]
+            self.yuu_logger.debug('Resolution list: {}'.format(', '.join(reso)))
 
         return ava_reso, 'Success'
 
