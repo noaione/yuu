@@ -56,11 +56,12 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     
     Check supported streams from yuu with `yuu streams`
     """
+    fn_log_output = '{f}/yuu_log-{t}.log'.format(f=get_yuu_folder(), t=datetime.today().strftime("%Y-%m-%d_%HH%MM"))
+    logging.basicConfig(level=logging.DEBUG,
+                        handlers=[logging.FileHandler(fn_log_output, 'a', 'utf-8')],
+                        format='%(asctime)s %(name)-1s -- [%(levelname)s]: %(message)s',
+                        datefmt='%Y-%m-%d %H:%M:%S')
     yuu_logger = logging.getLogger('yuu')
-    fh = logging.FileHandler('{f}/yuu_log-{t}.log'.format(f=get_yuu_folder(), t=datetime.today().strftime("%Y-%m-%d_%HH%MM")), encoding="utf-8")
-    fh.setLevel(logging.DEBUG)
-    fh.setFormatter(logging.Formatter('%(asctime)s %(name)-1s -- [%(levelname)s]: %(message)s'))
-    yuu_logger.addHandler(fh)
 
     console = logging.StreamHandler(sys.stdout)
     LOG_LEVEL = logging.INFO
@@ -137,12 +138,12 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
             yuu_logger.error('{}'.format(reason))
             exit(1)
         yuu_logger.info('Available resolution:'.format(yuuParser.type))
-        yuu_logger.log('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
+        yuu_logger.log(0, '{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
         print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
         for res in avares:
             r_c, wxh = res
             vidq, audq = yuuParser.resolution_data[r_c]
-            yuu_logger.log('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
+            yuu_logger.log(0, '{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
             print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
         exit(0)
 
