@@ -55,7 +55,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     
     Check supported streams from yuu with `yuu streams`
     """
-    yuu_logger = yuu_logger.getLogger('yuu')
+    yuu_logger = logging.getLogger('yuu')
     fh = logging.FileHandler('{f}/yuu_log-{t}.log'.format(f=get_yuu_folder(), t=datetime.today().strftime("%Y-%m-%d_%HH%MM%SS")), encoding="utf-8")
     fh.setLevel(logging.DEBUG)
     fh.setFormatter(logging.Formatter('%(asctime)s %(name)-1s -- [%(levelname)s]: %(message)s'))
