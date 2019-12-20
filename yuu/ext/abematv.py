@@ -1,6 +1,7 @@
 import hashlib
 import hmac
 import json
+import logging
 import os
 import re
 import struct
@@ -14,13 +15,13 @@ import m3u8
 from Crypto.Cipher import AES
 from tqdm import tqdm
 
-
 def is_channel(url):
     url = re.findall('(slot)', url)
     if url:
         return True
     return False
 
+yuu_abema_logger = logging.getLogger('yuu.abematv')
 
 class AbemaTVDownloader:
     def __init__(self, files, key, iv, url, session):
@@ -80,10 +81,10 @@ class AbemaTVDownloader:
 
 
 class AbemaTV:
-    def __init__(self, url, session, verbose=False):
+    def __init__(self, url, session):
         self.session = session
-        self.verbose = verbose
         self.type = 'AbemaTV'
+        self.yuu_logger = logging.getLogger('yuu.abematv.AbemaTV')
 
         self.url = url
         self.m3u8_url = None
@@ -140,7 +141,7 @@ class AbemaTV:
 
 
     def __repr__(self):
-        return '<yuu.AbemaTV: Verbose={}, Resolution={}, Device ID={}, m3u8 URL={}>'.format(self.verbose, self.resolution, self.device_id, self.m3u8_url)
+        return '<yuu.AbemaTV: URL={}, Resolution={}, Device ID={}, m3u8 URL={}>'.format(self.url, self.resolution, self.device_id, self.m3u8_url)
 
     def get_downloader(self, files, key, iv):
         """
@@ -156,8 +157,7 @@ class AbemaTV:
 
     def authorize(self, username, password):
         if not self.device_id:
-            if self.verbose:
-                print('[INFO] {}: Fetching temporary token'.format(self.type))
+            self.yuu_logger.info('{}: Fetching temporary token'.format(self.type))
             res, reas = self.get_token() # Abema needs authorization header before authenticating
             if not res:
                 return res, reas
@@ -178,13 +178,11 @@ class AbemaTV:
         res = self.session.post(_ENDPOINT_USE, json=auth_)
         if res.status_code > 299:
             res_j = res.json()
-            if self.verbose:
-                print('[ERROR] Abema Response: {}'.format(res_j['message']))
+            self.yuu_logger.debug('Abema Response: {}'.format(res_j['message']))
             return False, 'Wrong {} and password combination'.format(_USERNAME_METHOD)
 
         res_j = res.json()
-        if self.verbose:
-            print('[DEBUG] Authentication Token: {}'.format(res_j['token']))
+        self.yuu_logger.debug('Authentication Token: {}'.format(res_j['token']))
         self.session.headers.update({'Authorization': 'bearer ' + res_j['token']})
 
         self.authorized = True
@@ -230,8 +228,7 @@ class AbemaTV:
 
             finalize = urlsafe_b64encode(tmp).rstrip(b"=").decode("utf-8")
 
-            if self.verbose:
-                print('[DEBUG] Secret Key: {}'.format(finalize))
+            self.yuu_logger.debug('Secret Key: {}'.format(finalize))
 
             return finalize
 
@@ -239,22 +236,19 @@ class AbemaTV:
             return True, 'Success'
 
         deviceid = str(uuid.uuid4())
-        if self.verbose:
-            print('[DEBUG] Generated Device UUID: {}'.format(deviceid))
+        self.yuu_logger.debug('Generated Device UUID: {}'.format(deviceid))
         json_data = {"deviceId": deviceid, "applicationKeySecret": key_secret(deviceid)}
+        self.yuu_logger.debug('Generated applicationKeySecret: {}'.format(json_data['applicationKeySecret']))
 
-        if self.verbose:
-            print('[DEBUG] Sending json data')
+        self.yuu_logger.debug('Sending json data')
         res = self.session.post(self._USERAPI, json=json_data).json()
 
         try:
-            if self.verbose:
-                print('[DEBUG] Data sended, getting token')
+            self.yuu_logger.debug('Data sended, getting token')
             token = res['token']
-            if self.verbose:
-                print('[DEBUG] Usertoken: {}'.format(token))
+            self.yuu_logger.debug('User token: {}'.format(token))
         except:
-            return None, 'Failed to get usertoken.'
+            return None, 'Failed to get user token.'
 
         self.device_id = deviceid
         self.session.headers.update({'Authorization': 'bearer ' + token})
@@ -280,8 +274,7 @@ class AbemaTV:
         if resolution == 'worst':
             resolution = '180p'
 
-        if self.verbose:
-            print('[DEBUG] Requesting data to Abema API')
+        self.yuu_logger.debug('Requesting data to Abema API')
         if '.m3u8' in self.url[-5:]:
             reg = re.compile(r'(program|slot)\/[\w+-]+')
             self.url = re.search(reg, m3u8)[0]
@@ -291,9 +284,11 @@ class AbemaTV:
 
         if is_channel(self.url):
             req = self.session.get(self._CHANNELAPI + ep_link)
-            if self.verbose and req.status_code == 200:
-                print('[DEBUG] Data requested')
-                print('[DEBUG] Parsing json API')
+            if req.status_code != 200:
+                self.yuu_logger.log(40, 'Abema Response: ' + req.text)
+                return None, 'Error occured when communicating with Abema (Response: {})'.format(req.status_code)
+            self.yuu_logger.debug('Data requested')
+            self.yuu_logger.debug('Parsing json API')
 
             jsdata = req.json()
             output_name = jsdata['slot']['title']
@@ -306,14 +301,15 @@ class AbemaTV:
             if self.is_m3u8:
                 m3u8_url = self.url
 
-            if self.verbose:
-                print('[DEBUG] M3U8 Link: {}'.format(m3u8_url))
-                print('[DEBUG] Title: {}'.format(output_name))
+            self.yuu_logger.debug('M3U8 Link: {}'.format(m3u8_url))
+            self.yuu_logger.debug('Title: {}'.format(output_name))
         else:
             req = self.session.get(self._PROGRAMAPI + ep_link)
-            if self.verbose and req.status_code == 200:
-                print('[DEBUG] Data requested')
-                print('[DEBUG] Parsing json API')
+            if req.status_code != 200:
+                self.yuu_logger.log(40, 'Abema Response: ' + req.text)
+                return None, 'Error occured when communicating with Abema (Response: {})'.format(req.status_code)
+            self.yuu_logger.debug('Data requested')
+            self.yuu_logger.debug('Parsing json API')
             jsdata = req.json()
             title = jsdata['series']['title']
             epnum = jsdata['episode']['title']
@@ -324,10 +320,9 @@ class AbemaTV:
             if self.is_m3u8:
                 m3u8_url = self.url
 
-            if self.verbose:
-                print('[DEBUG] M3U8 Link: {}'.format(m3u8_url))
-                print('[DEBUG] Video title: {}'.format(title))
-                print('[DEBUG] Episode number: {}'.format(epnum))
+            self.yuu_logger.debug('M3U8 Link: {}'.format(m3u8_url))
+            self.yuu_logger.debug('Video title: {}'.format(title))
+            self.yuu_logger.debug('Episode number: {}'.format(epnum))
 
         self.resolution = resolution
         self.m3u8_url = m3u8_url
@@ -336,17 +331,17 @@ class AbemaTV:
 
 
     def parse_m3u8(self):
-        if self.verbose:
-            print('[DEBUG] Requesting m3u8')
+        self.yuu_logger.debug('Requesting m3u8')
         r = self.session.get(self.m3u8_url)
+        self.yuu_logger.debug('Data requested')
 
-        if self.verbose and r.status_code == 200:
-            if r.status_code == 200:
-                print('[DEBUG] m3u8 requested')
-                print('[DEBUG] Parsing m3u8')
+        if 'timeshift forbidden' in r.text:
+            return None, None, 'This video can\'t be downloaded for now.'
 
         if r.status_code == 403:
             return None, None, 'This video is geo-locked for Japan only.'
+
+        self.yuu_logger.debug('Parsing m3u8')
 
         x = m3u8.loads(r.text)
         files = x.files[1:]
@@ -365,9 +360,9 @@ class AbemaTV:
         if self.resolution[:-1] != resgex:
             self.resolution = resgex + 'p'
         if self.verbose:
-            print('[DEBUG] Total files: {}'.format(len(files)))
-            print('[DEBUG] IV: {}'.format(iv))
-            print('[DEBUG] Ticket key: {}'.format(ticket))
+            self.yuu_logger.debug('Total files: {}'.format(len(files)))
+            self.yuu_logger.debug('IV: {}'.format(iv))
+            self.yuu_logger.debug('Ticket key: {}'.format(ticket))
 
         n = 0.0
         for seg in x.segments:
@@ -380,15 +375,12 @@ class AbemaTV:
 
 
     def get_video_key(self):
-        if self.verbose:
-            print('[DEBUG] Sending parameter to API')
+        self.yuu_logger.debug('Sending parameter to API')
         restoken = self.session.get(self._MEDIATOKEN_API, params=self._KEYPARAMS).json()
         mediatoken = restoken['token']
-        if self.verbose:
-            print('[DEBUG] Mediatoken: {}'.format(mediatoken))
+        self.yuu_logger.debug('Media token: {}'.format(mediatoken))
 
-        if self.verbose:
-            print('[DEBUG] Sending ticket and mediatoken to License API')
+        self.yuu_logger.debug('Sending ticket and media token to License API')
         rgl = self.session.post(self._LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": self.ticket})
         if rgl.status_code == 403:
             return None, 'Access to the video are not allowed\nProbably a premium video or geo-locked.'
@@ -398,43 +390,36 @@ class AbemaTV:
         cid = gl['cid']
         k = gl['k']
 
-        if self.verbose:
-            print('[DEBUG] CID: {}'.format(cid))
-            print('[DEBUG] K: {}'.format(k))
+        self.yuu_logger.debug('CID: {}'.format(cid))
+        self.yuu_logger.debug('K: {}'.format(k))
 
-        if self.verbose:
-            print('[DEBUG] Summing up data with STRTABLE')
+        self.yuu_logger.debug('Summing up data with STRTABLE')
         res = sum([self._STRTABLE.find(k[i]) * (58 ** (len(k) - 1 - i)) for i in range(len(k))])
 
-        if self.verbose:
-            print('[DEBUG] Result: {}'.format(res))
-            print('[DEBUG] Intepreting data')
+        self.yuu_logger.debug('Result: {}'.format(res))
+        self.yuu_logger.debug('Intepreting data')
 
         encvk = struct.pack('>QQ', res >> 64, res & 0xffffffffffffffff)
 
-        if self.verbose:
-            print('[DEBUG] Encoded video key: {}'.format(encvk))
-            print('[DEBUG] Hashing data')
+        self.yuu_logger.debug('Encoded video key: {}'.format(encvk))
+        self.yuu_logger.debug('Hashing data')
 
         h = hmac.new(unhexlify(self._HKEY), (cid + self.device_id).encode("utf-8"), digestmod=hashlib.sha256)
         enckey = h.digest()
 
-        if self.verbose:
-            print('[DEBUG] Second Encoded video key: {}'.format(enckey))
-            print('[DEBUG] Decrypting result')
+        self.yuu_logger.debug('Second Encoded video key: {}'.format(enckey))
+        self.yuu_logger.debug('Decrypting result')
 
         aes = AES.new(enckey, AES.MODE_ECB)
         vkey = aes.decrypt(encvk)
 
-        if self.verbose:
-            print('[DEBUG] Decrypted, Resulting output: {}'.format(vkey))
+        self.yuu_logger.debug('Decrypted, Result: {}'.format(vkey))
 
         return vkey, 'Success getting video key'
 
 
     def resolutions(self):
-        if self.verbose:
-            print('[DEBUG] Requesting data to API')
+        self.yuu_logger.debug('Requesting data to API')
 
         m3u8_ = self.m3u8_url[:self.m3u8_url.rfind('/')]
         m3u8_1080 = m3u8_[:m3u8_.rfind('/')] + '/1080/playlist.m3u8'
@@ -444,7 +429,12 @@ class AbemaTV:
         m3u8_240 = m3u8_[:m3u8_.rfind('/')] + '/240/playlist.m3u8'
         m3u8_180 = m3u8_[:m3u8_.rfind('/')] + '/180/playlist.m3u8'
 
-        r_all = m3u8.loads(self.session.get(m3u8_[:m3u8_.rfind('/')] + '/playlist.m3u8').text)
+        rr_all = self.session.get(m3u8_[:m3u8_.rfind('/')] + '/playlist.m3u8')
+
+        if 'timeshift forbidden' in rr_all.text:
+            return None, None, 'This video can\'t be downloaded for now.'
+
+        r_all = m3u8.loads(rr_all.text)
         r1080 = m3u8.loads(self.session.get(m3u8_1080).text)
         r720 = m3u8.loads(self.session.get(m3u8_720).text)
         r480 = m3u8.loads(self.session.get(m3u8_480).text)
@@ -503,7 +493,9 @@ class AbemaTV:
                     temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
             ava_reso.append(temp_)
 
-        return ava_reso
+        self.yuu_logger.debug('Resolution list: {}'.format(', '.join(ava_reso)))
+
+        return ava_reso, 'Success'
 
     def check_output(self, output=None, output_name=None):
         if output:
