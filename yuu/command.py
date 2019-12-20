@@ -71,32 +71,9 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
         exit(1)
 
     if proxy:
-        print('[INFO] Testing proxy')
-        try:
-            proxy_test = [
-                {'http': proxy, 'https': proxy},
-                {'https': proxy},
-                {'http': proxy}
-            ]
-            for mode in proxy_test:
-                try:
-                    if verbose:
-                        print('[DEBUG] Testing {x} mode proxy'.format(x="+".join(mode.keys())))
-                    sesi.proxies = mode
-                    sesi.get('http://httpbin.org/get') # Test website to check if proxy works or not
-                    pmode = "+".join(mode.keys()).upper() + "/SOCKS5"
-                    break
-                except requests.exceptions.RequestException:
-                    if verbose:
-                        print('[DEBUG] Failed')
-                    if mode == proxy_test[-1]:
-                        print('[ERROR] Cannot connect to proxy (Request timeout)')
-                        exit(1)
-        except KeyboardInterrupt:
-            print('[WARN] Interrupted')
-            exit(0)
+        sesi.proxies = {'http': proxy, 'https': proxy}
     if verbose:
-        print('[DEBUG] Using proxy mode: {}'.format(pmode))
+        print('[DEBUG] Using proxy: {}'.format(proxy))
 
     _prepare_yuu_data() # Prepare yuu_download.json
     yuuParser = get_parser(input)
