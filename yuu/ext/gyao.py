@@ -135,7 +135,7 @@ class GYAO:
 
         if resolution not in res_list:
             if not check_only:
-                return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
+                return None, 'Unknown resolution: {}. (Check it with `-R`)'.format(resolution)
 
         if resolution == 'best':
             _resolution = '1080p-0'
@@ -160,7 +160,7 @@ class GYAO:
         }
 
         error_bc = {
-            'CLIENT_GEO': 'Video are geo-locked to Japanese only.'
+            'CLIENT_GEO': 'This video is geo-locked for Japan only.'
         }
 
         req_bc = self.session.get('https://edge.api.brightcove.com/playback/v1/accounts/{}/videos/{}'.format(self.account, r_vid['videoId']), headers=headers_pk)
@@ -193,7 +193,7 @@ class GYAO:
                 print('[DEBUG] Parsing m3u8')
 
         if r.status_code == 403:
-            return None, 'Video are geo-locked to Japanese only.'
+            return None, 'This video is geo-locked for Japan only.'
 
         r_all = m3u8.loads(r.text)
         r2_all = m3u8.loads(r2.text)
@@ -244,7 +244,7 @@ class GYAO:
                 print('[DEBUG] Parsing m3u8')
 
         if r.status_code == 403:
-            return None, None, 'Video are geo-locked to Japanese only.'
+            return None, None, 'This video is geo-locked for Japan only.'
 
         x = m3u8.loads(r.text)
         files = x.files

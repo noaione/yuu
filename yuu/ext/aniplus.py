@@ -112,7 +112,7 @@ class Aniplus:
         res_list = ['720p', 'best', 'worst']
         if resolution not in res_list:
             if not check_only:
-                return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
+                return None, 'Unknown resolution: {}. (Check it with `-R`)'.format(resolution)
 
         if resolution in ['best', 'worst']:
             resolution = '720p'
@@ -124,7 +124,7 @@ class Aniplus:
 
         test_region = re.findall(r"error\-region", req.text)
         if test_region:
-            None, 'Video are geo-locked. Checkout more at: https://www.aniplus-asia.com/error-region/'
+            None, 'Video are geo-locked. Refer to: https://www.aniplus-asia.com/error-region/'
 
         outputname = re.findall(r"<title>([\w\s]*).*>", req.text)[0].strip()
 

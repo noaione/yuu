@@ -273,7 +273,7 @@ class AbemaTV:
 
         if resolution not in res_list:
             if not check_only:
-                return None, 'Resolution {} are non-existant. (Check it with `-R`)'.format(resolution)
+                return None, 'Unknown resolution: {}. (Check it with `-R`)'.format(resolution)
 
         if resolution == 'best':
             resolution = '1080p'
@@ -346,7 +346,7 @@ class AbemaTV:
                 print('[DEBUG] Parsing m3u8')
 
         if r.status_code == 403:
-            return None, None, 'Video are geo-locked to Japanese only.'
+            return None, None, 'This video is geo-locked for Japan only.'
 
         x = m3u8.loads(r.text)
         files = x.files[1:]
