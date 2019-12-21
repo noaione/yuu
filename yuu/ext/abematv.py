@@ -41,12 +41,14 @@ class AbemaTVDownloader:
 
         if os.name == "nt":
             self.yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
+            sffx = '\\'
         else:
             self.yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
+            sffx = '/'
         if not os.path.isdir(self.yuu_folder):
             os.mkdir(self.yuu_folder)
 
-        self.temporary_folder = tempfile.mkdtemp(dir=self.yuu_folder)
+        self.temporary_folder = tempfile.mkdtemp(suffix=sffx, dir=self.yuu_folder)
 
         self._aes = None
 
@@ -59,7 +61,7 @@ class AbemaTVDownloader:
         try:
             with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
                 for tsf in self.files:
-                    outputtemp = os.path.join(self.temporary_folder, os.path.basename(tsf))
+                    outputtemp = self.temporary_folder + os.path.basename(tsf)
                     if outputtemp.find('?tver') != -1:
                         outputtemp = outputtemp[:outputtemp.find('?tver')]
                     with open(outputtemp, 'wb') as outf:
@@ -68,7 +70,7 @@ class AbemaTVDownloader:
                             vid = self._aes.decrypt(vid.content)
                             outf.write(vid)
                         except Exception as err:
-                            yuu_log.error('\nProblem occured\nreason: {}'.format(err))
+                            yuu_log.error('Problem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
                     pbar.update()
                     self.downloaded_files.append(outputtemp)

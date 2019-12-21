@@ -22,19 +22,21 @@ class GYAODownloader:
 
         if os.name == "nt":
             yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
+            sffx = '\\'
         else:
-            yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
-        if not os.path.isdir(yuu_folder):
-            os.mkdir(yuu_folder)
+            self.yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
+            sffx = '/'
+        if not os.path.isdir(self.yuu_folder):
+            os.mkdir(self.yuu_folder)
 
-        self.temporary_folder = tempfile.mkdtemp(dir=yuu_folder)
+        self.temporary_folder = tempfile.mkdtemp(suffix=sffx, dir=self.yuu_folder)
 
 
     def download_chunk(self):
         try:
             with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
                 for tsf in self.files:
-                    outputtemp = os.path.join(self.temporary_folder, os.path.basename(tsf))
+                    outputtemp = self.temporary_folder + os.path.basename(tsf)
                     with open(outputtemp, 'wb') as outf:
                         try:
                             vid = self.session.get(tsf)
