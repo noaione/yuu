@@ -21,7 +21,7 @@ def is_channel(url):
         return True
     return False
 
-yuu_abema_logger = logging.getLogger('yuu.abematv')
+yuu_log = logging.getLogger('yuu.abematv')
 
 class AbemaTVDownloader:
     def __init__(self, files, key, iv, url, session):
@@ -50,11 +50,9 @@ class AbemaTVDownloader:
 
         self._aes = None
 
-
     def setup_decryptor(self):
         self.iv = unhexlify(self.iv)
         self._aes = AES.new(self.key, AES.MODE_CBC, IV=self.iv)
-
 
     def download_chunk(self):
         self.setup_decryptor() # Initialize a new decryptor
@@ -70,12 +68,11 @@ class AbemaTVDownloader:
                             vid = self._aes.decrypt(vid.content)
                             outf.write(vid)
                         except Exception as err:
-                            print('[ERROR] Problem occured\nreason: {}'.format(err))
+                            yuu_log.error('\nProblem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
                     pbar.update()
-                    self.downloaded_files.append(outputtemp)
         except KeyboardInterrupt:
-            print('[WARN] User pressed CTRL+C, cleaning up...')
+            yuu_log.warn('User pressed CTRL+C, cleaning up...')
             return None, self.temporary_folder
         return self.downloaded_files, self.temporary_folder
 
