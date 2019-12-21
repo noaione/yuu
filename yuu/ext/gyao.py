@@ -34,7 +34,7 @@ class GYAODownloader:
         try:
             with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
                 for tsf in self.files:
-                    outputtemp = self.temporary_folder + '\\' + os.path.basename(tsf)
+                    outputtemp = os.path.join(self.temporary_folder, os.path.basename(tsf))
                     with open(outputtemp, 'wb') as outf:
                         try:
                             vid = self.session.get(tsf)
