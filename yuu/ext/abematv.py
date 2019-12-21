@@ -59,7 +59,7 @@ class AbemaTVDownloader:
         try:
             with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
                 for tsf in self.files:
-                    outputtemp = self.temporary_folder + '\\' + os.path.basename(tsf)
+                    outputtemp = os.path.join(self.temporary_folder, os.path.basename(tsf))
                     if outputtemp.find('?tver') != -1:
                         outputtemp = outputtemp[:outputtemp.find('?tver')]
                     with open(outputtemp, 'wb') as outf:
@@ -71,6 +71,7 @@ class AbemaTVDownloader:
                             yuu_log.error('\nProblem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
                     pbar.update()
+                    self.downloaded_files.append(outputtemp)
         except KeyboardInterrupt:
             yuu_log.warn('User pressed CTRL+C, cleaning up...')
             return None, self.temporary_folder
