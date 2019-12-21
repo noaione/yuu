@@ -1,8 +1,10 @@
+import logging
 import re
 import os
 import tempfile
 from tqdm import tqdm
-from functools import partial
+
+yuu_log = logging.getLogger('yuu.aniplus')
 
 class AniplusDownloader:
     def __init__(self, files, key, iv, url, session):
@@ -40,16 +42,15 @@ class AniplusDownloader:
                                 pbar.update(len(chunk))
                                 current_chunk += len(chunk)
         except KeyboardInterrupt:
-            print('[WARN] User pressed CTRL+C.')
+            yuu_log.warn('User pressed CTRL+C.')
 
 
 class Aniplus:
-    def __init__(self, url, session, verbose=False):
+    def __init__(self, url, session):
         self.session = session
-        self.verbose = verbose
         self.type = 'Aniplus'
+        self.yuu_logger = logging.getLogger('yuu.aniplus.Aniplus')
 
-        # TODO: Fix naming scheme for all of my class
         self.url = url
         self.webpage_data = None
         self.resolution = None
@@ -68,7 +69,7 @@ class Aniplus:
         self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'})
 
     def __repr__(self):
-        return '<yuu.Aniplus: Verbose={}, Resolution={}, Authorized={}>'.format(self.verbose, self.resolution, self.authorized)
+        return '<yuu.Aniplus: URL={}, Resolution={}, Authorized={}>'.format(self.url, self.resolution, self.authorized)
 
     def get_downloader(self, files, key, iv):
         """
@@ -84,7 +85,8 @@ class Aniplus:
             'log': username,
             'pwd': password
         }
-        
+
+        self.yuu_logger.debug('Logging in with username `{}` and password `{}`'.format(creds['log'], '*' * len(creds['pwd'])))
         r = self.session.post(_AUTH_URL, data=creds)
         if r.status_code != 200:
             return False, 'Error {}: Probably wrong username/password combination'.format(r.status_code)
@@ -106,8 +108,7 @@ class Aniplus:
         """
         Parse Aniplus data
         """
-        if self.verbose:
-            print('[DEBUG] Requesting data to Aniplus')
+        self.yuu_logger.debug('Requesting data to Aniplus')
 
         res_list = ['720p', 'best', 'worst']
         if resolution not in res_list:
@@ -118,9 +119,8 @@ class Aniplus:
             resolution = '720p'
 
         req = self.session.get(self.url)
-        if self.verbose and req.status_code == 200:
-            print('[DEBUG] Data requested')
-            print('[DEBUG] Parsing webpage result')
+        self.yuu_logger.debug('Data requested')
+        self.yuu_logger.debug('Parsing webpage result')
 
         test_region = re.findall(r"error\-region", req.text)
         if test_region:
@@ -131,6 +131,7 @@ class Aniplus:
         self.webpage_data = req.text
         self.resolution = resolution
         self.session.headers.update({'Referer': self.url})
+        self.yuu_logger.debug('Output: {}'.format(outputname))
 
         return outputname, 'Success'
 
@@ -167,6 +168,7 @@ class Aniplus:
         if not video_src:
             return None, None, 'Failed to fetch video url'
         self.files_uri = video_src[0]
+        self.yuu_logger.debug('Video URL: {}'.format(self.files_uri))
         return video_src[0], None, 'Success'
 
 
