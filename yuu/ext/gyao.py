@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 import re
 import tempfile
 
 import m3u8
 from tqdm import tqdm
+
+yuu_log = logging.getLogger('yuu.gyao')
 
 class GYAODownloader:
     def __init__(self, files, key, iv, url, session):
@@ -48,10 +51,10 @@ class GYAODownloader:
 
 
 class GYAO:
-    def __init__(self, url, session, verbose=False):
+    def __init__(self, url, session):
         self.session = session
-        self.verbose = verbose
         self.type = 'GYAO'
+        self.yuu_logger = logging.getLogger('yuu.gyao.GYAO')
 
         self.url = url
         self.m3u8_url = None
@@ -85,7 +88,7 @@ class GYAO:
 
 
     def __repr__(self):
-        return '<yuu.GYAO: Verbose={}, Resolution={}, m3u8 URL={}>'.format(self.verbose, self.resolution, self.m3u8_url)
+        return '<yuu.GYAO: URL={}, Resolution={}, m3u8 URL={}>'.format(self.url, self.resolution, self.m3u8_url)
 
     def get_downloader(self, files, key, iv):
         """
@@ -106,6 +109,7 @@ class GYAO:
         if not v_id:
             return None, 'Video URL are not valid'
 
+        self.yuu_logger.debug('Fetching data account...')
         r_vid = self.session.get('https://gyao.yahoo.co.jp/dam/v1/videos/' + v_id[0].replace('/', ':').rstrip(':') + query, headers=headers)
         r_cov = self.session.get("http://players.brightcove.net/4235717419001/default_default/index.html?videoId=" + r_vid.json()['videoId'])
         data_account = re.findall(r'<video-js\s+[^>]*\bdata-account\s*=.([\d]*).*>', r_cov.text, re.IGNORECASE | re.DOTALL | re.VERBOSE)
@@ -113,6 +117,9 @@ class GYAO:
         r_pk = self.session.get("http://players.brightcove.net/{}/default_default/index.html".format(data_account[0]))
 
         pkey = re.findall(r'policyKey\s*:\s*(["\'])(?P<pk>.+?)\1', r_pk.text)[0][1]
+
+        self.yuu_logger.debug('Account: {}'.format(data_account[0]))
+        self.yuu_logger.debug('Policy key: {}'.format(pkey))
 
         self.account = data_account[0]
         self.policy_key = pkey
@@ -124,8 +131,7 @@ class GYAO:
         """
         Function to parse gyao url
         """
-        if self.verbose:
-            print('[DEBUG] Requesting data to GYAO/Brightcove API')
+        self.yuu_logger.debug('Requesting data to GYAO/Brightcove API')
 
         res_list = [
             '240p-0', '360p-0', '480p-0', '720p-0', '1080p-0',
@@ -147,6 +153,7 @@ class GYAO:
         v_id = re.findall(r'(?isx)http(?:|s)://gyao.yahoo.co.jp/(?:player|p|title[\w])/(?P<p1>[\w]*.*)', self.url)
         if not v_id:
             return None, 'Video URL are not valid'
+        self.yuu_logger.debug('Video ID: {}'.format(v_id[0]))
 
         headers = {'X-User-Agent': 'Unknown Pc GYAO!/2.0.0 Web'}
         r_vid = self.session.get('https://gyao.yahoo.co.jp/dam/v1/videos/' + v_id[0].replace('/', ':').rstrip(':') + '?fields=title%2Cid%2CvideoId%2CshortTitle', headers=headers).json()
@@ -163,37 +170,33 @@ class GYAO:
             'CLIENT_GEO': 'This video is geo-locked for Japan only.'
         }
 
+        self.yuu_logger.debug('Requesting HLS and video info')
         req_bc = self.session.get('https://edge.api.brightcove.com/playback/v1/accounts/{}/videos/{}'.format(self.account, r_vid['videoId']), headers=headers_pk)
+        self.yuu_logger.debug('Data requested')
         if req_bc.status_code == 403:
             error_reason = req_bc[0]['error_subcode']
             return None, error_bc[error_reason]
 
-        if self.verbose and req_bc.status_code == 200:
-            print('[DEBUG] Data requested')
-            print('[DEBUG] Parsing json API')
+        self.yuu_logger.debug('Parsing json API')
 
         jsdata = req_bc.json()
         hls_list = jsdata['sources'][2]['src'] # Use EXT-V4 http version as the base
         hls_list2 = jsdata['sources'][0]['src'] # Use EXT-V3 http version as the one that will be sended over
 
-        if self.verbose:
-            print('[DEBUG] M3U8 Link: {}'.format(hls_list))
-            print('[DEBUG] Title: {}'.format(output_name))
+        self.yuu_logger.debug('M3U8 Link: {}'.format(hls_list))
+        self.yuu_logger.debug('Title: {}'.format(output_name))
 
         self.m3u8_url_list = hls_list
 
-        if self.verbose:
-            print('[DEBUG] Requesting m3u8 list')
+        self.yuu_logger.debug('Requesting m3u8 list')
         r = self.session.get(hls_list)
         r2 = self.session.get(hls_list2)
-
-        if self.verbose and r.status_code == 200:
-            if r.status_code == 200:
-                print('[DEBUG] m3u8 requested')
-                print('[DEBUG] Parsing m3u8')
+        self.yuu_logger.debug('m3u8 requested')
 
         if r.status_code == 403:
             return None, 'This video is geo-locked for Japan only.'
+
+        self.yuu_logger.debug('Parsing m3u8')
 
         r_all = m3u8.loads(r.text)
         r2_all = m3u8.loads(r2.text)
@@ -234,30 +237,24 @@ class GYAO:
 
 
     def parse_m3u8(self):
-        if self.verbose:
-            print('[DEBUG] Requesting m3u8')
+        self.yuu_logger.debug('Requesting m3u8')
         r = self.session.get(self.m3u8_url)
-
-        if self.verbose and r.status_code == 200:
-            if r.status_code == 200:
-                print('[DEBUG] m3u8 requested')
-                print('[DEBUG] Parsing m3u8')
-
+        self.yuu_logger.debug('m3u8 requested')
         if r.status_code == 403:
             return None, None, 'This video is geo-locked for Japan only.'
+
+        self.yuu_logger.debug('Parsing m3u8')
 
         x = m3u8.loads(r.text)
         files = x.files
 
-        if self.verbose:
-            print('[DEBUG] Total files: {}'.format(len(files)))
+        self.yuu_logger.debug('Total files: {}'.format(len(files)))
 
         return files, None, 'Success'
 
 
     def resolutions(self):
-        if self.verbose:
-            print('[DEBUG] Requesting data to API')
+        self.yuu_logger.debug('Requesting data to API')
 
         r_all = m3u8.loads(self.session.get(self.m3u8_url_list).text)
 
@@ -273,6 +270,10 @@ class GYAO:
             temp_.append(res_name)
 
             ava_reso.append(temp_)
+
+        if ava_reso:
+            reso = [r[0] for r in ava_reso]
+            self.yuu_logger.debug('Resolution list: {}'.format(', '.join(reso)))
 
         return ava_reso
 
