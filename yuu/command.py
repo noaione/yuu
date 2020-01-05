@@ -113,7 +113,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
 
     if yuuParser.authorization_required:
         if username is None and password is None:
-            yuu_logger.warning('You need to be logged in to use download from this VOD')
+            yuu_logger.warning('Account are required to download from this VOD')
             exit(1)
         yuu_logger.info('Authenticating')
         result, reason = yuuParser.authorize(username, password)

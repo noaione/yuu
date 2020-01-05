@@ -181,7 +181,7 @@ class GYAO:
 
         jsdata = req_bc.json()
         hls_list = jsdata['sources'][2]['src'] # Use EXT-V4 http version as the base
-        hls_list2 = jsdata['sources'][0]['src'] # Use EXT-V3 http version as the one that will be sended over
+        hls_list2 = jsdata['sources'][0]['src'] # Use EXT-V3 http version as the one that will be sent over
 
         self.yuu_logger.debug('M3U8 Link: {}'.format(hls_list))
         self.yuu_logger.debug('Title: {}'.format(output_name))

@@ -245,7 +245,7 @@ class AbemaTV:
         res = self.session.post(self._USERAPI, json=json_data).json()
 
         try:
-            self.yuu_logger.debug('Data sended, getting token')
+            self.yuu_logger.debug('Data sent, getting token')
             token = res['token']
             self.yuu_logger.debug('User token: {}'.format(token))
         except:
@@ -478,7 +478,7 @@ class AbemaTV:
         self.yuu_logger.debug('Sending ticket and media token to License API')
         rgl = self.session.post(self._LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket})
         if rgl.status_code == 403:
-            return None, 'Access to the video are not allowed\nProbably a premium video or geo-locked.'
+            return None, 'Access to this video are not allowed\nProbably a premium video or geo-locked.'
 
         gl = rgl.json()
 
