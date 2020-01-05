@@ -7,10 +7,7 @@ from tqdm import tqdm
 yuu_log = logging.getLogger('yuu.aniplus')
 
 class AniplusDownloader:
-    def __init__(self, files, key, iv, url, session):
-        self.files = files
-        self.key = key # Ignored
-        self.iv = iv # Ignored
+    def __init__(self, url, session):
         self.url = url
         self.session = session
 
@@ -25,12 +22,12 @@ class AniplusDownloader:
         ) # Update once again just to make sure
 
 
-    def download_chunk(self, output):
+    def download_chunk(self, files, output):
         output_ext = output[output.rfind('.'):]
         if output[:-4] != '.mp4':
             output = output[:len(output_ext) * -1] + '.mp4'
         try:
-            with self.session.get(self.files, stream=True) as r:
+            with self.session.get(files, stream=True) as r:
                 resp_head = r.headers
                 length = int(resp_head['Content-Length'])
                 current_chunk = 524288 # 512 KB
@@ -72,11 +69,11 @@ class Aniplus:
     def __repr__(self):
         return '<yuu.Aniplus: URL={}, Resolution={}, Authorized={}>'.format(self.url, self.resolution, self.authorized)
 
-    def get_downloader(self, files, key, iv):
+    def get_downloader(self):
         """
         Return a :class: of the Downloader
         """
-        return AniplusDownloader(files, key, iv, self.url, self.session)
+        return AniplusDownloader(self.url, self.session)
 
 
     def authorize(self, username, password):
@@ -137,7 +134,7 @@ class Aniplus:
         return outputname, 'Success'
 
 
-    def get_video_key(self):
+    def get_video_key(self, ticket):
         """
         Return True since there's no key decryption in Aniplus
         But use this to fetch the estimated size
@@ -164,13 +161,13 @@ class Aniplus:
         return True, None
 
 
-    def parse_m3u8(self):
+    def parse_m3u8(self, m3u8_url):
         video_src = re.findall(r"<source type=\"video/mp4\"\s+[^>]*\bsrc\s*=.([\w:/.]*).*>", self.webpage_data, re.IGNORECASE | re.MULTILINE | re.DOTALL)
         if not video_src:
             return None, None, 'Failed to fetch video url'
         self.files_uri = video_src[0]
         self.yuu_logger.debug('Video URL: {}'.format(self.files_uri))
-        return video_src[0], None, 'Success'
+        return video_src[0], None, None, 'Success'
 
 
     def check_output(self, output=None, output_name=None):

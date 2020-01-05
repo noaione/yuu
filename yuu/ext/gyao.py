@@ -10,10 +10,7 @@ from tqdm import tqdm
 yuu_log = logging.getLogger('yuu.gyao')
 
 class GYAODownloader:
-    def __init__(self, files, key, iv, url, session):
-        self.files = files
-        self.key = key # Ignored
-        self.iv = iv # Ignored
+    def __init__(self, url, session):
         self.url = url
         self.session = session
 
@@ -33,10 +30,10 @@ class GYAODownloader:
         self.temporary_folder = self.temporary_folder + sffx
 
 
-    def download_chunk(self):
+    def download_chunk(self, files, key, iv):
         try:
-            with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
-                for tsf in self.files:
+            with tqdm(total=len(files), desc='Downloading', ascii=True, unit='file') as pbar:
+                for tsf in files:
                     outputtemp = self.temporary_folder + os.path.basename(tsf)
                     with open(outputtemp, 'wb') as outf:
                         try:
@@ -93,11 +90,11 @@ class GYAO:
     def __repr__(self):
         return '<yuu.GYAO: URL={}, Resolution={}, m3u8 URL={}>'.format(self.url, self.resolution, self.m3u8_url)
 
-    def get_downloader(self, files, key, iv):
+    def get_downloader(self):
         """
         Return a :class: of the Downloader
         """
-        return GYAODownloader(files, key, iv, self.url, self.session)
+        return GYAODownloader(self.url, self.session)
 
     def authorize(self, username, password):
         """
@@ -239,9 +236,9 @@ class GYAO:
         return output_name, None
 
 
-    def parse_m3u8(self):
+    def parse_m3u8(self, m3u8_url):
         self.yuu_logger.debug('Requesting m3u8')
-        r = self.session.get(self.m3u8_url)
+        r = self.session.get(m3u8_url)
         self.yuu_logger.debug('m3u8 requested')
         if r.status_code == 403:
             return None, None, 'This video is geo-locked for Japan only.'
@@ -253,7 +250,7 @@ class GYAO:
 
         self.yuu_logger.debug('Total files: {}'.format(len(files)))
 
-        return files, None, 'Success'
+        return files, None, None, 'Success'
 
 
     def resolutions(self):
@@ -281,7 +278,7 @@ class GYAO:
         return ava_reso
 
 
-    def get_video_key(self):
+    def get_video_key(self, ticket):
         """
         Return True since there's not key decryption in GYAO
         """

@@ -24,14 +24,9 @@ def is_channel(url):
 yuu_log = logging.getLogger('yuu.abematv')
 
 class AbemaTVDownloader:
-    def __init__(self, files, key, iv, url, session):
-        self.files = files
-        self.key = key
-
-        if iv.startswith('0x'):
-            self.iv = iv[2:]
-        else:
-            self.iv = iv
+    def __init__(self, url, session):
+        self.key = None
+        self.iv = None
 
         self.url = url
         self.session = session
@@ -57,11 +52,16 @@ class AbemaTVDownloader:
         self.iv = unhexlify(self.iv)
         self._aes = AES.new(self.key, AES.MODE_CBC, IV=self.iv)
 
-    def download_chunk(self):
+    def download_chunk(self, files, key, iv):
+        if iv.startswith('0x'):
+            self.iv = iv[2:]
+        else:
+            self.iv = iv
+        self.key = key
         self.setup_decryptor() # Initialize a new decryptor
         try:
-            with tqdm(total=len(self.files), desc='Downloading', ascii=True, unit='file') as pbar:
-                for tsf in self.files:
+            with tqdm(total=len(files), desc='Downloading', ascii=True, unit='file') as pbar:
+                for tsf in files:
                     outputtemp = self.temporary_folder + os.path.basename(tsf)
                     if outputtemp.find('?tver') != -1:
                         outputtemp = outputtemp[:outputtemp.find('?tver')]
@@ -90,7 +90,6 @@ class AbemaTV:
         self.url = url
         self.m3u8_url = None
         self.resolution = None
-        self.ticket = None
         self.device_id = None
         self.is_m3u8 = False
         self.est_filesize = None # In MiB
@@ -145,11 +144,11 @@ class AbemaTV:
     def __repr__(self):
         return '<yuu.AbemaTV: URL={}, Resolution={}, Device ID={}, m3u8 URL={}>'.format(self.url, self.resolution, self.device_id, self.m3u8_url)
 
-    def get_downloader(self, files, key, iv):
+    def get_downloader(self):
         """
         Return a :class: of the Downloader
         """
-        return AbemaTVDownloader(files, key, iv, self.url, self.session)
+        return AbemaTVDownloader(self.url, self.session)
 
     def resume_prepare(self):
         """
@@ -411,9 +410,9 @@ class AbemaTV:
         return output_name, 'Success'
 
 
-    def parse_m3u8(self):
+    def parse_m3u8(self, m3u8_url):
         self.yuu_logger.debug('Requesting m3u8')
-        r = self.session.get(self.m3u8_url)
+        r = self.session.get(m3u8_url)
         self.yuu_logger.debug('Data requested')
 
         if 'timeshift forbidden' in r.text:
@@ -449,19 +448,18 @@ class AbemaTV:
             n += seg.duration
 
         self.est_filesize = round((round(n) * self.bitrate_calculation[self.resolution]) / 1024 / 6, 2)
-        self.ticket = ticket
 
-        return parsed_files, iv[2:], 'Success'
+        return parsed_files, iv[2:], ticket, 'Success'
 
 
-    def get_video_key(self):
+    def get_video_key(self, ticket):
         self.yuu_logger.debug('Sending parameter to API')
         restoken = self.session.get(self._MEDIATOKEN_API, params=self._KEYPARAMS).json()
         mediatoken = restoken['token']
         self.yuu_logger.debug('Media token: {}'.format(mediatoken))
 
         self.yuu_logger.debug('Sending ticket and media token to License API')
-        rgl = self.session.post(self._LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": self.ticket})
+        rgl = self.session.post(self._LICENSE_API, params={"t": mediatoken}, json={"kv": "a", "lt": ticket})
         if rgl.status_code == 403:
             return None, 'Access to the video are not allowed\nProbably a premium video or geo-locked.'
 
