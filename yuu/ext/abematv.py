@@ -31,7 +31,6 @@ class AbemaTVDownloader:
         self.url = url
         self.session = session
 
-        self.downloaded_files = []
         self.merge = True
 
         if os.name == "nt":
@@ -58,6 +57,7 @@ class AbemaTVDownloader:
         else:
             self.iv = iv
         self.key = key
+        self.downloaded_files = []
         self.setup_decryptor() # Initialize a new decryptor
         try:
             with tqdm(total=len(files), desc='Downloading', ascii=True, unit='file') as pbar:
@@ -72,13 +72,13 @@ class AbemaTVDownloader:
                             outf.write(vid)
                         except Exception as err:
                             yuu_log.error('Problem occured\nreason: {}'.format(err))
-                            return None, self.temporary_folder
+                            return None
                     pbar.update()
                     self.downloaded_files.append(outputtemp)
         except KeyboardInterrupt:
             yuu_log.warn('User pressed CTRL+C, cleaning up...')
-            return None, self.temporary_folder
-        return self.downloaded_files, self.temporary_folder
+            return None
+        return self.downloaded_files
 
 
 class AbemaTV:
@@ -324,11 +324,21 @@ class AbemaTV:
                     elif 'freeEndAt' in episode:
                         free_episode = True
 
+                    if 'episode' in episode:
+                        try:
+                            episode_name = episode['episode']['title']
+                            if not episode_name:
+                                episode_name = episode_name['title']['number']
+                        except KeyError:
+                            episode_name = episode_name['title']['number']
+                    else:
+                        episode_name = nep
+
                     if not free_episode and not self.authorized:
-                        self.yuu_logger.warn('Skipping episode {} (Not authorized and premium video)'.format(nep))
+                        self.yuu_logger.warn('Skipping episode {} (Not authorized and premium video)'.format(episode_name))
                         continue
 
-                    self.yuu_logger.info('Processing episode {}'.format(nep))
+                    self.yuu_logger.info('Processing episode {}'.format(episode_name))
 
                     req_ep = self.session.get(self._PROGRAMAPI + episode['id'])
                     if req_ep.status_code != 200:
@@ -369,7 +379,7 @@ class AbemaTV:
         ep_link = self.url[self.url.rfind('/')+1:]
 
         self.yuu_logger.debug('Requesting data to Abema API')
-        if self.is_m3u8:
+        if is_channel(self.url):
             req = self.session.get(self._CHANNELAPI + ep_link)
             if req.status_code != 200:
                 self.yuu_logger.log(40, 'Abema Response: ' + req.text)

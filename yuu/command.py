@@ -13,6 +13,14 @@ from .common import (__version__, _prepare_yuu_data, get_parser,
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'], ignore_unknown_options=True)
 
+def delete_folder_contents(folder):
+    for filename in os.listdir(folder):
+        file_path = os.path.join(folder, filename)
+        if os.path.isfile(file_path) or os.path.islink(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            shutil.rmtree(file_path)
+
 @click.group(context_settings=CONTEXT_SETTINGS, invoke_without_command=True)
 @click.option('--version', '-V', is_flag=True, help="Show current version")
 def cli(version=False):
@@ -159,20 +167,14 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
 
     if isinstance(outputs, str):
         outputs = [outputs]
+
     _output_ = []
+    illegalchar = ['/', '<', '>', ':', '"', '\\', '|', '?', '*'] # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
     for output_name in outputs:
         o = yuuParser.check_output(output, output_name)
+        for char in illegalchar:
+            o = o.replace(char, '_')
         _output_.append(o)
-
-    illegalchar = ['/', '<', '>', ':', '"', '\\', '|', '?', '*'] # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
-    for char in illegalchar:
-        output = output.replace(char, '_')
-
-    yuu_logger.info('Fetching video key')
-    video_key, reason = yuuParser.get_video_key()
-    if not video_key:
-        yuu_logger.error('{}'.format(reason))
-        exit(1)
 
     formatter2 = logging.Formatter('[%(levelname)s][DOWN] {}: %(message)s'.format(yuuParser.type))
     yuu_logger.removeHandler(console)
@@ -180,11 +182,13 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     yuu_logger.addHandler(console)
 
     yuu_logger.info('Starting downloader...')
+    yuu_logger.info('Total files that will be downloaded: {}'.format(len(_output_)))
 
     # Initialize Download Process
     yuuDownloader = yuuParser.get_downloader()
+    temp_dir = yuuDownloader.temporary_folder
     for pos, _out_ in enumerate(_output_):
-        yuu_logger.info('Parsing m3u8 and fetching video key for output {}'.format(_out_))
+        yuu_logger.info('Parsing m3u8 and fetching video key for files no {}'.format(pos+1))
         files, iv, ticket, reason = yuuParser.parse_m3u8(m3u8_list[pos])
 
         if not files:
@@ -200,10 +204,9 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
         yuu_logger.info('Estimated file size: {} MiB'.format(yuuParser.est_filesize))
 
         if yuuDownloader.merge: # Workaround for stream that don't use .m3u8
-            dl_list, temp_dir = yuuDownloader.download_chunk(files, key, iv)
+            dl_list = yuuDownloader.download_chunk(files, key, iv)
             if not dl_list:
-                if temp_dir:
-                    shutil.rmtree(temp_dir)
+                delete_folder_contents(temp_dir)
                 continue
         else:
             yuuDownloader.download_chunk(files, _out_)
@@ -215,7 +218,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
             yuu_logger.info('Merging video')
             merge_video(dl_list, _out_)
             if not keep_:
-                shutil.rmtree(temp_dir)
+                delete_folder_contents(temp_dir)
         if mux:
             if os.path.isfile(_out_):
                 yuu_logger.info('Muxing video\n')
@@ -228,6 +231,8 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
                         os.remove(_out_)
                     _out_ = result
         yuu_logger.info('Finished downloading: {}'.format(_out_))
+    if not keep_:
+        shutil.rmtree(temp_dir)
     exit(0)
 
 

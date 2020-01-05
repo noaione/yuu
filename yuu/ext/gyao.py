@@ -14,7 +14,6 @@ class GYAODownloader:
         self.url = url
         self.session = session
 
-        self.downloaded_files = []
         self.merge = True
 
         if os.name == "nt":
@@ -31,6 +30,7 @@ class GYAODownloader:
 
 
     def download_chunk(self, files, key, iv):
+        self.downloaded_files = []
         try:
             with tqdm(total=len(files), desc='Downloading', ascii=True, unit='file') as pbar:
                 for tsf in files:
@@ -41,13 +41,13 @@ class GYAODownloader:
                             outf.write(vid.content)
                         except Exception as err:
                             yuu_log.error('Problem occured\nreason: {}'.format(err))
-                            return None, self.temporary_folder
+                            return None
                     pbar.update()
                     self.downloaded_files.append(outputtemp)
         except KeyboardInterrupt:
             yuu_log.warn('User pressed CTRL+C, cleaning up...')
-            return None, self.temporary_folder
-        return self.downloaded_files, self.temporary_folder
+            return None
+        return self.downloaded_files
 
 
 class GYAO:
