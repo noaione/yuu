@@ -1,6 +1,6 @@
 # yuu - Changelog
 
-[![koito yuu](https://raw.githubusercontent.com/noaione/cdn/gh-pages/i/fzpt7mt.jpg)](https://anilist.co/character/123528/Yuu-Koito)
+[![koito yuu](https://p.n4o.xyz/i/fzpt7mt.jpg)](https://anilist.co/character/123528/Yuu-Koito)
 
 [![pypi version](https://img.shields.io/pypi/v/yuu.svg?style=for-the-badge)](https://pypi.org/project/yuu/) [![python version](https://img.shields.io/pypi/pyversions/yuu.svg?style=for-the-badge)](#) [![License](https://img.shields.io/github/license/noaione/yuu.svg?style=for-the-badge)](https://github.com/noaione/yuu/blob/master/LICENSE)
 
@@ -77,3 +77,9 @@
 - Add support for AbemaTV Premium Video
 - Some bug fixing that I don't even know if it's even fixed.
 - Removed `legacy` branch link
+
+### Version 1.2.0
+- Add support for series/playlist download (batch download) [Currently only for Abema]
+- Removed old and unused code
+- Now using logger/logging (As suggested by *someone*)
+- Grammar fix
