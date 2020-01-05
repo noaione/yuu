@@ -136,6 +136,7 @@ class AbemaTV:
         self._USERAPI = "https://api.abema.io/v1/users"
         self._PROGRAMAPI = 'https://api.abema.io/v1/video/programs/'
         self._CHANNELAPI = 'https://api.abema.io/v1/media/slots/'
+        self._SERIESAPI = "https://api.abema.io/v1/video/series/"
 
         # Use Chrome UA
         self.session.headers.update({'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/75.0.3770.100 Safari/537.36'})
@@ -275,7 +276,85 @@ class AbemaTV:
         if resolution == 'worst':
             resolution = '180p'
 
-        self.yuu_logger.debug('Requesting data to Abema API')
+        # https://abema.tv/video/title/26-55 (series/playlists)
+        # https://api.abema.io/v1/video/series/26-55
+        # https://api.abema.io/v1/video/series/26-55/programs?seriesVersion=1577436473958778090&seasonId=26-55_s1&offset=0&order=seq&limit=40
+
+        series = re.search(r"(?P<series>title)/(?P<video_id>.*[^-_])", self.url)
+
+        if series:
+            video_id = series.group(2)
+            self.yuu_logger.info('Series url format detected, fetching all links...')
+            self.yuu_logger.debug('Requesting data to Abema API.')
+            req = self.session.get(self._SERIESAPI + video_id)
+            if req.status_code != 200:
+                self.yuu_logger.log(40, 'Abema Response: ' + req.text)
+                return None, 'Error occured when communicating with Abema (Response: {})'.format(req.status_code)
+            self.yuu_logger.debug('Data requested')
+            self.yuu_logger.debug('Parsing json results...')
+
+            m3u8_url_list = []
+            output_list = []
+
+            jsdata = req.json()
+            to_be_requested = "{api}{vid}/programs?seriesVersion={sv}&seasonId={si}&offset=0&order={od}"
+
+            season_data = jsdata['seasons']
+            version = jsdata['version']
+            prog_order = jsdata['programOrder']
+            for ns, season in enumerate(season_data, 1):
+                self.yuu_logger.info('Processing season ' + str(ns))
+                self.yuu_logger.debug('Requesting data to Abema API.')
+                req_season = self.session.get(to_be_requested.format(api=self._SERIESAPI, vid=video_id, sv=version, si=season['id'], od=prog_order))
+                if req_season.status_code != 200:
+                    self.yuu_logger.log(40, 'Abema Response: ' + req_season.text)
+                    return None, 'Error occured when communicating with Abema (Response: {})'.format(req_season.status_code)
+                self.yuu_logger.debug('Data requested')
+                self.yuu_logger.debug('Parsing json results...')
+
+                season_jsdata = req_season.json()
+                self.yuu_logger.debug('Processing total of {ep} episode for season {se}'.format(ep=len(season_jsdata['programs']), se=ns))
+
+                for nep, episode in enumerate(season_jsdata['programs'], 1):
+                    free_episode = False
+                    if 'label' in season_jsdata:
+                        if 'free' in season_jsdata['label']:
+                            free_episode = True
+                    elif 'freeEndAt' in season_jsdata:
+                        free_episode = True
+
+                    if not free_episode and not self.authorized:
+                        self.yuu_logger.warn('Skipping episode {} (Not authorized and premium video)'.format(nep))
+                        continue
+
+                    self.yuu_logger.info('Processing episode {}'.format(nep))
+
+                    req_ep = self.session.get(self._PROGRAMAPI + episode['id'])
+                    if req_ep.status_code != 200:
+                        self.yuu_logger.log(40, 'Abema Response: ' + req_ep.text)
+                        return None, 'Error occured when communicating with Abema (Response: {})'.format(req_ep.status_code)
+                    self.yuu_logger.debug('Data requested')
+                    self.yuu_logger.debug('Parsing json API')
+
+                    ep_json = req_ep.json()
+                    title = ep_json['series']['title']
+                    epnum = ep_json['episode']['title']
+                    hls = ep_json['playback']['hls']
+                    output_name = title + ' - ' + epnum
+
+                    m3u8_url = '{x}/{r}/playlist.m3u8'.format(x=hls[:hls.rfind('/')], r=resolution[:-1])
+
+                    self.yuu_logger.debug('M3U8 Link: {}'.format(m3u8_url))
+                    self.yuu_logger.debug('Video title: {}'.format(title))
+
+                    m3u8_url_list.append(m3u8_url)
+                    output_list.append(output_name)
+
+            self.resolution = resolution
+            self.m3u8_url = m3u8_url_list
+
+            return output_list, 'Success'
+
         if '.m3u8' in self.url[-5:]:
             reg = re.compile(r'(program|slot)\/[\w+-]+')
             self.url = re.search(reg, m3u8)[0]
@@ -283,7 +362,8 @@ class AbemaTV:
 
         ep_link = self.url[self.url.rfind('/')+1:]
 
-        if is_channel(self.url):
+        self.yuu_logger.debug('Requesting data to Abema API')
+        if self.is_m3u8:
             req = self.session.get(self._CHANNELAPI + ep_link)
             if req.status_code != 200:
                 self.yuu_logger.log(40, 'Abema Response: ' + req.text)
@@ -418,10 +498,10 @@ class AbemaTV:
         return vkey, 'Success getting video key'
 
 
-    def resolutions(self):
+    def resolutions(self, m3u8_uri):
         self.yuu_logger.debug('Requesting data to API')
 
-        m3u8_ = self.m3u8_url[:self.m3u8_url.rfind('/')]
+        m3u8_ = m3u8_uri[:m3u8_uri.rfind('/')]
         m3u8_1080 = m3u8_[:m3u8_.rfind('/')] + '/1080/playlist.m3u8'
         m3u8_720 = m3u8_[:m3u8_.rfind('/')] + '/720/playlist.m3u8'
         m3u8_480 = m3u8_[:m3u8_.rfind('/')] + '/480/playlist.m3u8'
@@ -432,7 +512,7 @@ class AbemaTV:
         rr_all = self.session.get(m3u8_[:m3u8_.rfind('/')] + '/playlist.m3u8')
 
         if 'timeshift forbidden' in rr_all.text:
-            return None, None, 'This video can\'t be downloaded for now.'
+            return None, 'This video can\'t be downloaded for now.'
 
         r_all = m3u8.loads(rr_all.text)
         r1080 = m3u8.loads(self.session.get(m3u8_1080).text)
@@ -446,7 +526,10 @@ class AbemaTV:
         for r_p in r_all.playlists:
             play_res.append(list(r_p.stream_info.resolution))
 
-        x1080 = r1080.files[1:][5]
+        x1080 = r1080.files[1:]
+        if not x1080:
+            return None, 'This video can\'t be downloaded for now.'
+        x1080 = x1080[5]
         x720 = r720.files[1:][5]
         x480 = r480.files[1:][5]
         x360 = r360.files[1:][5]

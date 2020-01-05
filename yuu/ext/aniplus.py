@@ -56,6 +56,7 @@ class Aniplus:
         self.resolution = None
         self.est_filesize = None # In MiB
         self.files_uri = None
+        self.m3u8_url = False # placeholder
 
         self.resolution_data = {
             "720p": ["~1000kb/s 25fps", "AAC 160kb/s 1ch"]
@@ -96,7 +97,7 @@ class Aniplus:
         return True, 'Authorized'
 
 
-    def resolutions(self):
+    def resolutions(self, placeholder_uri=None):
         """
         Return a resolutions list data
         Since Aniplus only have one resolution available, I just return hardcoded list

@@ -120,7 +120,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
             exit(1)
 
     if not yuuParser.authorized:
-        yuu_logger.info('Fetching temporary user token'.format(yuuParser.type))
+        yuu_logger.info('Fetching temporary user token')
         result, reason = yuuParser.get_token()
         if not result:
             yuu_logger.error('{}'.format(reason))
@@ -132,19 +132,24 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
         yuu_logger.error('{}'.format(reason))
         exit(1)
     if resR:
-        yuu_logger.info('Checking available resolution'.format(yuuParser.type))
-        avares, reason = yuuParser.resolutions()
-        if not avares:
-            yuu_logger.error('{}'.format(reason))
-            exit(1)
-        yuu_logger.info('Available resolution:'.format(yuuParser.type))
-        yuu_logger.log(0, '{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
-        print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
-        for res in avares:
-            r_c, wxh = res
-            vidq, audq = yuuParser.resolution_data[r_c]
-            yuu_logger.log(0, '{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
-            print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
+        if isinstance(yuuParser.m3u8_url, list):
+            m3u8_list = yuuParser.m3u8_url
+        else:
+            m3u8_list = [yuuParser.m3u8_url]
+        for n, m3u8 in enumerate(m3u8_list):
+            yuu_logger.info('Checking available resolution...')
+            avares, reason = yuuParser.resolutions(m3u8)
+            if not avares:
+                yuu_logger.error('{}'.format(reason))
+                continue
+            yuu_logger.info('Available resolution: {}'.format(yuuParser.type))
+            yuu_logger.log(0, '{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
+            print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
+            for res in avares:
+                r_c, wxh = res
+                vidq, audq = yuuParser.resolution_data[r_c]
+                yuu_logger.log(0, '{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
+                print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
         exit(0)
 
     yuu_logger.info('Parsing m3u8'.format(yuuParser.type))
