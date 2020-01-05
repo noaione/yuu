@@ -48,7 +48,8 @@ class AbemaTVDownloader:
         if not os.path.isdir(self.yuu_folder):
             os.mkdir(self.yuu_folder)
 
-        self.temporary_folder = tempfile.mkdtemp(suffix=sffx, dir=self.yuu_folder)
+        self.temporary_folder = tempfile.mkdtemp(dir=self.yuu_folder)
+        self.temporary_folder = self.temporary_folder + sffx
 
         self._aes = None
 
