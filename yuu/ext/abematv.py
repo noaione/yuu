@@ -299,6 +299,8 @@ class AbemaTV:
             to_be_requested = "{api}{vid}/programs?seriesVersion={sv}&seasonId={si}&offset=0&order={od}"
 
             season_data = jsdata['seasons']
+            if not season_data:
+                season_data = [{'id': ''}] # Assume film or some shit
             version = jsdata['version']
             prog_order = jsdata['programOrder']
             for ns, season in enumerate(season_data, 1):
@@ -316,10 +318,10 @@ class AbemaTV:
 
                 for nep, episode in enumerate(season_jsdata['programs'], 1):
                     free_episode = False
-                    if 'label' in season_jsdata:
-                        if 'free' in season_jsdata['label']:
+                    if 'label' in episode:
+                        if 'free' in episode['label']:
                             free_episode = True
-                    elif 'freeEndAt' in season_jsdata:
+                    elif 'freeEndAt' in episode:
                         free_episode = True
 
                     if not free_episode and not self.authorized:
@@ -352,7 +354,12 @@ class AbemaTV:
             self.resolution = resolution
             self.m3u8_url = m3u8_url_list
 
-            return output_list, 'Success'
+            if not output_list:
+                err_msg = "All video are for premium only, please provide login details."
+            else:
+                err_msg = "Success"
+
+            return output_list, err_msg
 
         if '.m3u8' in self.url[-5:]:
             reg = re.compile(r'(program|slot)\/[\w+-]+')
