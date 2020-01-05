@@ -21,7 +21,7 @@ class GYAODownloader:
         self.merge = True
 
         if os.name == "nt":
-            yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
+            self.yuu_folder = os.path.join(os.getenv('LOCALAPPDATA'), 'yuu_data')
             sffx = '\\'
         else:
             self.yuu_folder = os.path.join(os.getenv('HOME'), '.yuu_data')
@@ -29,7 +29,8 @@ class GYAODownloader:
         if not os.path.isdir(self.yuu_folder):
             os.mkdir(self.yuu_folder)
 
-        self.temporary_folder = tempfile.mkdtemp(suffix=sffx, dir=self.yuu_folder)
+        self.temporary_folder = tempfile.mkdtemp(dir=self.yuu_folder)
+        self.temporary_folder = self.temporary_folder + sffx
 
 
     def download_chunk(self):
@@ -42,12 +43,12 @@ class GYAODownloader:
                             vid = self.session.get(tsf)
                             outf.write(vid.content)
                         except Exception as err:
-                            print('[ERROR] Problem occured\nreason: {}'.format(err))
+                            yuu_log.error('Problem occured\nreason: {}'.format(err))
                             return None, self.temporary_folder
                     pbar.update()
                     self.downloaded_files.append(outputtemp)
         except KeyboardInterrupt:
-            print('[WARN] User pressed CTRL+C, cleaning up...')
+            yuu_log.warn('User pressed CTRL+C, cleaning up...')
             return None, self.temporary_folder
         return self.downloaded_files, self.temporary_folder
 
