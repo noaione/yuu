@@ -142,7 +142,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
             if not avares:
                 yuu_logger.error('{}'.format(reason))
                 continue
-            yuu_logger.info('Available resolution: {}'.format(yuuParser.type))
+            yuu_logger.info('Available resolution:')
             yuu_logger.log(0, '{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
             print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format("   Key", "Resolution", "Video Quality", "Audio Quality", width=16))
             for res in avares:
