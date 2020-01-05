@@ -126,7 +126,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
             yuu_logger.error('{}'.format(reason))
             exit(1)
 
-    yuu_logger.info('Parsing url'.format(yuuParser.type))
+    yuu_logger.info('Parsing url')
     output_name, reason = yuuParser.parse(res, resR)
     if not output_name:
         yuu_logger.error('{}'.format(reason))
@@ -152,7 +152,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
                 print('{0: <{width}}{1: <{width}}{2: <{width}}{3: <{width}}'.format('>> ' + r_c, wxh, vidq, audq, width=16))
         exit(0)
 
-    yuu_logger.info('Parsing m3u8'.format(yuuParser.type))
+    yuu_logger.info('Parsing m3u8')
     files, iv, reason = yuuParser.parse_m3u8()
 
     if not files:
@@ -170,7 +170,7 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     for char in illegalchar:
         output = output.replace(char, '_')
 
-    yuu_logger.info('Fetching video key'.format(yuuParser.type))
+    yuu_logger.info('Fetching video key')
     video_key, reason = yuuParser.get_video_key()
     if not video_key:
         yuu_logger.error('{}'.format(reason))
