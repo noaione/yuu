@@ -168,28 +168,25 @@ def main_downloader(input, username, password, proxy, res, resR, mux, keep_, out
     if isinstance(outputs, str):
         outputs = [outputs]
 
-    _output_ = []
-    illegalchar = ['/', '<', '>', ':', '"', '\\', '|', '?', '*'] # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
-    for output_name in outputs:
-        o = yuuParser.check_output(output, output_name)
-        for char in illegalchar:
-            o = o.replace(char, '_')
-        _output_.append(o)
-
     formatter2 = logging.Formatter('[%(levelname)s][DOWN] {}: %(message)s'.format(yuuParser.type))
     yuu_logger.removeHandler(console)
     console.setFormatter(formatter2)
     yuu_logger.addHandler(console)
 
     yuu_logger.info('Starting downloader...')
-    yuu_logger.info('Total files that will be downloaded: {}'.format(len(_output_)))
+    yuu_logger.info('Total files that will be downloaded: {}'.format(len(outputs)))
 
     # Initialize Download Process
     yuuDownloader = yuuParser.get_downloader()
     temp_dir = yuuDownloader.temporary_folder
-    for pos, _out_ in enumerate(_output_):
+    illegalchar = ['/', '<', '>', ':', '"', '\\', '|', '?', '*'] # https://docs.microsoft.com/en-us/windows/desktop/FileIO/naming-a-file
+    for pos, _out_ in enumerate(outputs):
         yuu_logger.info('Parsing m3u8 and fetching video key for files no {}'.format(pos+1))
         files, iv, ticket, reason = yuuParser.parse_m3u8(m3u8_list[pos])
+        _out_ = yuuParser.check_output(output, _out_)
+
+        for char in illegalchar:
+            _out_ = _out_.replace(char, '_')
 
         if not files:
             yuu_logger.error('{}'.format(reason))
