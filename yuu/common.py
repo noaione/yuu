@@ -55,24 +55,24 @@ def mux_video(old_file):
     It will try to use ffmpeg first, if it's not in the PATH, then it will try to use mkvmerge
     If it's doesn't exist too, it just gonna skip.
     """
-    # FFMPEG check
+    # MkvMerge/FFMPEG check
     use_ffmpeg = False
     use_mkvmerge = False
     try:
-        subprocess.check_call(['ffmpeg', '-version'])
-        use_ffmpeg = True
+        subprocess.check_call(['mkvmerge', '-V'])
+        use_mkvmerge = True
     except FileNotFoundError:
         try:
-            subprocess.check_call(['mkvmerge', '-V'])
-            use_mkvmerge = True
+            subprocess.check_call(['ffmpeg', '-version'])
+            use_ffmpeg = True
         except FileNotFoundError:
             return None
 
     fn_, _ = os.path.splitext(old_file)
-    if use_ffmpeg:
-        subprocess.call(['ffmpeg', '-i', old_file, '-c', 'copy', '{f}.mkv'.format(f=fn_)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     if use_mkvmerge:
         subprocess.call(['mkvmerge', '-o', '{f}.mkv'.format(f=fn_), old_file], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    if use_ffmpeg:
+        subprocess.call(['ffmpeg', '-i', old_file, '-c', 'copy', '{f}.mkv'.format(f=fn_)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return '{f}.mkv'.format(f=fn_)
 
 
