@@ -83,3 +83,8 @@
 - Removed old and unused code
 - Now using logger/logging (As suggested by *someone*)
 - Grammar fix
+
+#### Version 1.2.1
+- Use mkvmerge and ffmpeg as fallback
+- Add missing `None`
+- Fix Abema wrong resolution filename
