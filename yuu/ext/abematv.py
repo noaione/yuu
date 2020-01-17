@@ -433,10 +433,10 @@ class AbemaTV:
         self.yuu_logger.debug('Data requested')
 
         if 'timeshift forbidden' in r.text:
-            return None, None, 'This video can\'t be downloaded for now.'
+            return None, None, None, 'This video can\'t be downloaded for now.'
 
         if r.status_code == 403:
-            return None, None, 'This video is geo-locked for Japan only.'
+            return None, None, None, 'This video is geo-locked for Japan only.'
 
         self.yuu_logger.debug('Parsing m3u8')
 
