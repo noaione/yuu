@@ -90,6 +90,7 @@ class AbemaTV:
         self.url = url
         self.m3u8_url = None
         self.resolution = None
+        self.resolution_o = None
         self.device_id = None
         self.is_m3u8 = False
         self.est_filesize = None # In MiB
@@ -272,6 +273,7 @@ class AbemaTV:
 
         if resolution == 'best':
             resolution = '1080p'
+            self.resolution_o = 'best'
         if resolution == 'worst':
             resolution = '180p'
 
@@ -408,6 +410,10 @@ class AbemaTV:
             self.yuu_logger.debug('Data requested')
             self.yuu_logger.debug('Parsing json API')
             jsdata = req.json()
+            if jsdata['mediaStatus']:
+                if 'drm' in jsdata['mediaStatus']:
+                    if jsdata['mediaStatus']['drm']:
+                        return None, 'This video has a different DRM method and cannot be decrypted by yuu for now'
             title = jsdata['series']['title']
             epnum = jsdata['episode']['title']
             hls = jsdata['playback']['hls']
@@ -444,7 +450,11 @@ class AbemaTV:
         files = x.files[1:]
         if not files[0]:
             files = files[1:]
+        if 'tsda' in files[5]:
+            # Assume DRMed
+            return None, None, None, 'This video has a different DRM method and cannot be decrypted by yuu for now'
         resgex = re.findall(r'(\d*)(?:\/\w+.ts)', files[0])[0]
+        keys_data = x.keys[0]
         iv = x.keys[0].iv
         ticket = x.keys[0].uri[18:]
 
@@ -455,6 +465,8 @@ class AbemaTV:
             parsed_files.append(f)
 
         if self.resolution[:-1] != resgex:
+            if not self.resolution_o:
+                self.yuu_logger.warn('Changing resolution, from {} to {}p'.format(self.resolution, resgex))
             self.resolution = resgex + 'p'
         self.yuu_logger.debug('Total files: {}'.format(len(files)))
         self.yuu_logger.debug('IV: {}'.format(iv))
@@ -517,6 +529,7 @@ class AbemaTV:
         self.yuu_logger.debug('Requesting data to API')
 
         m3u8_ = m3u8_uri[:m3u8_uri.rfind('/')]
+        base_url = m3u8_[:m3u8_.rfind('/')] + '/'
         m3u8_1080 = m3u8_[:m3u8_.rfind('/')] + '/1080/playlist.m3u8'
         m3u8_720 = m3u8_[:m3u8_.rfind('/')] + '/720/playlist.m3u8'
         m3u8_480 = m3u8_[:m3u8_.rfind('/')] + '/480/playlist.m3u8'
@@ -524,72 +537,45 @@ class AbemaTV:
         m3u8_240 = m3u8_[:m3u8_.rfind('/')] + '/240/playlist.m3u8'
         m3u8_180 = m3u8_[:m3u8_.rfind('/')] + '/180/playlist.m3u8'
 
-        rr_all = self.session.get(m3u8_[:m3u8_.rfind('/')] + '/playlist.m3u8')
+        rr_all = self.session.get(base_url + 'playlist.m3u8')
 
         if 'timeshift forbidden' in rr_all.text:
             return None, 'This video can\'t be downloaded for now.'
 
         r_all = m3u8.loads(rr_all.text)
-        r1080 = m3u8.loads(self.session.get(m3u8_1080).text)
-        r720 = m3u8.loads(self.session.get(m3u8_720).text)
-        r480 = m3u8.loads(self.session.get(m3u8_480).text)
-        r360 = m3u8.loads(self.session.get(m3u8_360).text)
-        r240 = m3u8.loads(self.session.get(m3u8_240).text)
-        r180 = m3u8.loads(self.session.get(m3u8_180).text)
 
         play_res = []
         for r_p in r_all.playlists:
-            play_res.append(list(r_p.stream_info.resolution))
-
-        x1080 = r1080.files[1:]
-        if not x1080:
-            return None, 'This video can\'t be downloaded for now.'
-        x1080 = x1080[5]
-        x720 = r720.files[1:][5]
-        x480 = r480.files[1:][5]
-        x360 = r360.files[1:][5]
-        x240 = r240.files[1:][5]
-        x180 = r180.files[1:][5]
+            temp = []
+            temp.append(r_p.stream_info.resolution)
+            temp.append(base_url + r_p.uri)
+            play_res.append(temp)
 
         resgex = re.compile(r'(\d*)(?:\/\w+.ts)')
 
         ava_reso = []
-        if '1080' in re.findall(resgex, x1080):
-            temp_ = ['1080p']
-            for r in play_res:
-                if 1080 in r:
-                    temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
-            ava_reso.append(temp_)
-        if '720' in re.findall(resgex, x720):
-            temp_ = ['720p']
-            for r in play_res:
-                if 720 in r:
-                    temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
-            ava_reso.append(temp_)
-        if '480' in re.findall(resgex, x480):
-            temp_ = ['480p']
-            for r in play_res:
-                if 480 in r:
-                    temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
-            ava_reso.append(temp_)
-        if '360' in re.findall(resgex, x360):
-            temp_ = ['360p']
-            for r in play_res:
-                if 360 in r:
-                    temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
-            ava_reso.append(temp_)
-        if '240' in re.findall(resgex, x240):
-            temp_ = ['240p']
-            for r in play_res:
-                if 240 in r:
-                    temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
-            ava_reso.append(temp_)
-        if '180' in re.findall(resgex, x180):
-            temp_ = ['180p']
-            for r in play_res:
-                if 180 in r:
-                    temp_.append('{w}x{h}'.format(w=r[0], h=r[1]))
-            ava_reso.append(temp_)
+        for resdata in play_res:
+            reswh, m3u8_uri = resdata
+            resw, resh = reswh
+            self.yuu_logger.debug('Validating {}p resolution'.format(resh))
+            rres = m3u8.loads(self.session.get(m3u8_uri).text)
+
+            m3f = rres.files[1:]
+            if not m3f:
+                return None, 'This video can\'t be downloaded for now.'
+            self.yuu_logger.debug('Sample link: ' + m3f[5])
+
+            if 'tsda' in files[5]:
+                # Assume DRMed
+                return None, 'This video has a different DRM method and cannot be decrypted by yuu for now'
+
+            if str(resh) in re.findall(resgex, m3f[5]):
+                ava_reso.append(
+                    [
+                        '{h}p'.format(h=resh),
+                        '{w}x{h}'.format(w=resw, h=resh)
+                    ]
+                )
 
         if ava_reso:
             reso = [r[0] for r in ava_reso]

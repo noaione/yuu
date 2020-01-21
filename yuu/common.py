@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 from .ext import *
 
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 
 def version_compare(new_version):
