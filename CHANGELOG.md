@@ -85,6 +85,10 @@
 - Grammar fix
 
 #### Version 1.2.1
-- Use mkvmerge and ffmpeg as fallback
+- Use mkvmerge and ffmpeg as fallback (for muxing)
 - Add missing `None`
 - Fix Abema wrong resolution filename
+
+#### Version 1.2.2
+- Redo AbemaTV resolutions checking
+- Throw [ERROR] if they tried to download DRMed Video (Protected by Widevine, etc.)
