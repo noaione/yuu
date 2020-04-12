@@ -565,7 +565,7 @@ class AbemaTV:
                 return None, 'This video can\'t be downloaded for now.'
             self.yuu_logger.debug('Sample link: ' + m3f[5])
 
-            if 'tsda' in files[5]:
+            if 'tsda' in rres.files[5]:
                 # Assume DRMed
                 return None, 'This video has a different DRM method and cannot be decrypted by yuu for now'
 
